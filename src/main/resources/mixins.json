@@ -29,6 +29,7 @@
     "KeyboardMixin",
     "LightmapTextureManagerMixin",
     "LivingEntityRendererMixin",
+    "LivingEntityNoDelayMixin",
     "MinecraftClientMixin",
     "MixinBuiltChunk",
     "MixinClientPlayerInteractionManager",
@@ -37,7 +38,10 @@
     "MouseMixin",
     "MultiplayerScreenOpenMixin",
     "MultiplayerServerListWidgetMixin",
+    "MultiPlayerGameModeNoDelayMixin",
+    "NoDelayMixin",
     "PlayerListHudMixin",
+    "RenderTickCounterMixin",
     "ScreenMixin",
     "SplashOverlayMixin",
     "StatusEffectFogModifierMixin",
@@ -49,11 +53,10 @@
     "defaultRequire": 1
   },
   "mixins": [
-    "ClientConnectionAccessor",
-    "ClientConnectionMixin",
     "EntityMixin",
     "FireworkRocketEntityMixin",
     "LivingEntityMixin",
+    "MixinLivingEntityElytraTravel",
     "PlayerEntityMixin",
     "TextVisitFactoryMixin"
   ]

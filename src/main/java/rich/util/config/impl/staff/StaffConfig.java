@@ -21,7 +21,7 @@ public class StaffConfig {
     private final Path configPath;
 
     private StaffConfig() {
-        Path configDir = Paths.get("Rich", "configs");
+        Path configDir = Paths.get("zagaDLC", "configs");
         try {
             Files.createDirectories(configDir);
         } catch (IOException ignored) {}

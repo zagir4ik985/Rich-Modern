@@ -23,7 +23,7 @@ public class WayConfig {
     private final Path configPath;
 
     private WayConfig() {
-        Path configDir = Paths.get("Rich", "configs");
+        Path configDir = Paths.get("zagaDLC", "configs");
         try {
             Files.createDirectories(configDir);
         } catch (IOException ignored) {}

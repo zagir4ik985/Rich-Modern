@@ -14,7 +14,7 @@ import rich.events.impl.ModuleToggleEvent;
 import rich.modules.module.category.ModuleCategory;
 import rich.modules.module.setting.SettingRepository;
 import rich.modules.impl.render.Hud;
-import rich.screens.hud.Notifications;
+import rich.screens.hud.NotifyComponent;
 import rich.util.animations.Animation;
 import rich.util.animations.Decelerate;
 import rich.util.animations.Direction;
@@ -74,15 +74,11 @@ public class ModuleStructure extends SettingRepository implements IMinecraft {
 
         if (mc.player != null && mc.world != null) {
             Hud hud = Hud.getInstance();
-            Notifications notifications = Notifications.getInstance();
+            NotifyComponent notifications = NotifyComponent.getInstance();
 
             if (hud != null && hud.isState() && notifications != null) {
                 if (hud.interfaceSettings.isSelected("Notifications")) {
-                    if (state) {
-                        notifications.addNotification("Feature "  + name + " - enabled!", 2000);
-                    } else {
-                        notifications.addNotification("Feature " + name + " - disabled!", 2000);
-                    }
+                    notifications.addNotification(this, state);
                 }
             }
 

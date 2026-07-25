@@ -23,7 +23,7 @@ public class BindConfig {
     private int BindKey = GLFW.GLFW_KEY_RIGHT_SHIFT;
 
     private BindConfig() {
-        Path configDir = Paths.get("Rich", "configs");
+        Path configDir = Paths.get("zagaDLC", "configs");
         try {
             Files.createDirectories(configDir);
         } catch (IOException ignored) {}

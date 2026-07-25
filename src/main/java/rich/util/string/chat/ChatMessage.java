@@ -9,7 +9,7 @@ import rich.util.string.chat.helper.TextHelper;
 
 public class ChatMessage {
     public static MutableText brandmessage() {
-        return (MutableText) TextHelper.applyPredefinedGradient("Rich Client", "black_light_purple", true);
+        return (MutableText) TextHelper.applyPredefinedGradient("zagaDLC", "black_light_purple", true);
     }
 
     public static MutableText blockesp() {
@@ -26,7 +26,7 @@ public class ChatMessage {
 
     public static void brandmessage(String message) {
         if (MinecraftClient.getInstance().player != null) {
-            Text prefix = TextHelper.applyPredefinedGradient("Rich Client -> ", "black_light_purple", true);
+            Text prefix = TextHelper.applyPredefinedGradient("zagaDLC -> ", "black_light_purple", true);
             Text formattedMessage = prefix.copy().append(Text.literal(message));
             MinecraftClient.getInstance().player.sendMessage(formattedMessage, false);
         }

@@ -27,7 +27,7 @@ public class ConfigAutoSaver {
         this.running = new AtomicBoolean(false);
         this.lastSaveTime = new AtomicLong(0);
         this.executor = Executors.newSingleThreadScheduledExecutor(r -> {
-            Thread thread = new Thread(r, "Rich-ConfigAutoSaver");
+            Thread thread = new Thread(r, "zagaDLC-ConfigAutoSaver");
             thread.setDaemon(true);
             thread.setPriority(Thread.MIN_PRIORITY);
             return thread;

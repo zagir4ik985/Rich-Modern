@@ -63,6 +63,11 @@ public abstract class GameRendererMixin {
     @Unique
     private final MatrixStack matrices = new MatrixStack();
 
+    @Unique
+    private Hud hudCache;
+    @Unique
+    private NoRender noRenderCache;
+
     @Shadow
     protected abstract void bobView(MatrixStack matrices, float tickDelta);
 
@@ -113,13 +118,6 @@ public abstract class GameRendererMixin {
         worldSpaceStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(camera.getYaw() + 180.0F));
 
         Render3D.lastProjMat.set(client.gameRenderer.getBasicProjectionMatrix(getFov(camera, tickDelta, true)));
-        Render3D.lastModMat.set(RenderSystem.getModelViewMatrix());
-        Render3D.lastWorldSpaceMatrix.set(worldSpaceStack.peek().getPositionMatrix());
-
-        Render3D.setLastWorldSpaceEntry(matrixStack.peek());
-        Render3D.setLastTickDelta(tickDelta);
-        Render3D.setLastCameraPos(camera.getCameraPos());
-        Render3D.setLastCameraRotation(new Quaternionf(camera.getRotation()));
 
         Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
         modelViewStack.pushMatrix().mul(view);
@@ -132,6 +130,14 @@ public abstract class GameRendererMixin {
         modelViewStack.mul(matrices.peek().getPositionMatrix().invert(new Matrix4f()));
         matrices.pop();
 
+        Render3D.lastModMat.set(RenderSystem.getModelViewMatrix());
+        Render3D.lastWorldSpaceMatrix.set(worldSpaceStack.peek().getPositionMatrix());
+
+        Render3D.setLastWorldSpaceEntry(matrixStack.peek());
+        Render3D.setLastTickDelta(tickDelta);
+        Render3D.setLastCameraPos(camera.getCameraPos());
+        Render3D.setLastCameraRotation(new Quaternionf(camera.getRotation()));
+
         WorldRenderEvent event = new WorldRenderEvent(matrixStack, tickDelta);
         EventManager.callEvent(event);
         Render3D.onWorldRender(event);
@@ -141,7 +147,7 @@ public abstract class GameRendererMixin {
 
     @Inject(method = "tiltViewWhenHurt", at = @At("HEAD"), cancellable = true)
     private void onTiltViewWhenHurt(MatrixStack matrices, float tickDelta, CallbackInfo ci) {
-        NoRender noRender = NoRender.getInstance();
+        NoRender noRender = noRenderCache != null ? noRenderCache : (noRenderCache = NoRender.getInstance());
         if (noRender != null && noRender.isState() && noRender.modeSetting.isSelected("Damage")) {
             ci.cancel();
         }
@@ -149,7 +155,7 @@ public abstract class GameRendererMixin {
 
     @ModifyExpressionValue(method = "renderWorld", at = @At(value = "INVOKE", target = "Ljava/lang/Math;max(FF)F", ordinal = 0))
     private float onNauseaDistortion(float original) {
-        NoRender noRender = NoRender.getInstance();
+        NoRender noRender = noRenderCache != null ? noRenderCache : (noRenderCache = NoRender.getInstance());
         if (noRender != null && noRender.isState() && noRender.modeSetting.isSelected("Nausea")) {
             return 0.0F;
         }
@@ -171,7 +177,7 @@ public abstract class GameRendererMixin {
 
         DrawContext context = new DrawContext(client, guiState, mouseX, mouseY);
 
-        Hud hud = Hud.getInstance();
+        Hud hud = hudCache != null ? hudCache : (hudCache = Hud.getInstance());
         if (hud != null && hud.isState()) {
             boolean isChatScreen = client.currentScreen instanceof ChatScreen;
             Drag.onDraw(context, mouseX, mouseY, tickDelta, isChatScreen);

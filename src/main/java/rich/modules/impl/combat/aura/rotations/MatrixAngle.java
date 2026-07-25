@@ -1,7 +1,6 @@
 package rich.modules.impl.combat.aura.rotations;
 
 import rich.Initialization;
-import rich.modules.impl.combat.Aura;
 import rich.modules.impl.combat.aura.Angle;
 import rich.modules.impl.combat.aura.AngleConnection;
 import rich.modules.impl.combat.aura.MathAngle;
@@ -25,9 +24,8 @@ public class MatrixAngle extends RotateConstructor {
     @Override
     public Angle limitAngleChange(Angle currentAngle, Angle targetAngle, Vec3d vec3d, Entity entity) {
         StrikeManager attackHandler = Initialization.getInstance().getManager().getAttackPerpetrator().getAttackHandler();
-        Aura aura = Aura.getInstance();
         StopWatch attackTimer = attackHandler.getAttackTimer();
-        boolean canAttack = entity != null && attackHandler.canAttack(aura.getConfig(), 0);
+        boolean canAttack = entity != null && attackHandler.canAttack(null, 0);
         if (entity !=null && canAttack) {
             Vec3d aimPoint = Vector.hitbox(entity, 1, entity.isOnGround() ? 0.9F : 1.4F, 1, 2);
             targetAngle = MathAngle.calculateAngle(aimPoint);
@@ -49,7 +47,7 @@ public class MatrixAngle extends RotateConstructor {
 
         float resolve1 = canAttack ? 0 : 13, resolve2 = canAttack ? 0 : 8;
 
-        if (!aura.isState() || entity == null) {
+        if (!false || entity == null) {
             float speedFactor3 = MathHelper.clamp(1f - (rotationDifference / 180.0f), 0.1f, 1.0f);
             speed = !attackTimer.finished(550) ? 0.05F : 0.8F * speedFactor3;
             jitterYaw = 0;

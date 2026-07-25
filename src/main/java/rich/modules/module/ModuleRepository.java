@@ -25,7 +25,6 @@ public class ModuleRepository {
     public void setup() {
         builder()
                 .add(new Hud())
-                .add(new Aura())
                 .add(new HitEffect())
                 .add(new Esp())
                 .add(new BlockESP())
@@ -102,6 +101,14 @@ public class ModuleRepository {
                 .add(new SwingAnimation())
                 .add(new AutoSprint())
                 .add(new AutoBuy())
+                .add(new BaseFinder())
+                .add(new AutoAppleFarm())
+                .add(new KillSounds())
+                .add(new SpeedSpooky())
+                .add(new ElytraSpeed())
+                .add(new ItemCooldowns())
+                .add(new UseTracker())
+                .add(new HoldMyItems())
                 .hidden(new AutoParser());
     }
 

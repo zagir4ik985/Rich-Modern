@@ -22,7 +22,6 @@ import rich.IMinecraft;
 import rich.events.api.types.EventType;
 import rich.events.impl.PacketEvent;
 import rich.events.impl.UsingItemEvent;
-import rich.modules.impl.combat.Aura;
 import rich.modules.impl.combat.TriggerBot;
 import rich.modules.impl.combat.aura.AngleConnection;
 import rich.modules.impl.combat.aura.target.RaycastAngle;
@@ -92,8 +91,7 @@ public class StrikeManager implements IMinecraft {
     }
 
     private boolean shouldWaitForEating() {
-        Aura aura = Aura.getInstance();
-        return aura.options.isSelected("Не бить если ешь") && isPlayerEating();
+        return false && isPlayerEating();
     }
 
     private boolean isInWater() {
@@ -199,9 +197,8 @@ public class StrikeManager implements IMinecraft {
     }
 
     private boolean canCritNow() {
-        Aura aura = Aura.getInstance();
-        boolean checkCritEnabled = aura.getCheckCrit().isValue();
-        boolean smartCritsEnabled = aura.getSmartCrits().isValue();
+        boolean checkCritEnabled = false;
+        boolean smartCritsEnabled = false;
 
         if (isInWater() || hasLowCeiling() || hasMovementRestrictions()) {
             return true;
@@ -266,7 +263,7 @@ public class StrikeManager implements IMinecraft {
         boolean shouldReset = wasSprinting && shouldResetSprintForCrit();
 
         if (shouldReset) {
-            if (Aura.getInstance().getResetSprintMode().isSelected("Пакетный")) {
+            if (false) {
                 mc.getNetworkHandler()
                         .sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.STOP_SPRINTING));
             } else {
@@ -277,7 +274,7 @@ public class StrikeManager implements IMinecraft {
         executeAttack(config);
 
         if (shouldReset) {
-            if (Aura.getInstance().getResetSprintMode().isSelected("Пакетный")) {
+            if (false) {
                 mc.getNetworkHandler()
                         .sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.START_SPRINTING));
             } else {
@@ -298,7 +295,7 @@ public class StrikeManager implements IMinecraft {
     private void handleMaceAttack(StrikerConstructor.AttackPerpetratorConfigurable config) {
         if (shouldWaitForEating())
             return;
-        if (mc.player.distanceTo(config.getTarget()) > Aura.getInstance().getAttackrange().getValue())
+        if (mc.player.distanceTo(config.getTarget()) > 3.0)
             return;
         if (!RaycastAngle.rayTrace(config))
             return;
@@ -315,7 +312,7 @@ public class StrikeManager implements IMinecraft {
         boolean shouldReset = wasSprinting && shouldResetSprintForCrit();
 
         if (shouldReset) {
-            if (Aura.getInstance().getResetSprintMode().isSelected("Пакетный")) {
+            if (false) {
                 mc.getNetworkHandler()
                         .sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.STOP_SPRINTING));
             } else {
@@ -326,7 +323,7 @@ public class StrikeManager implements IMinecraft {
         executeAttack(config);
 
         if (shouldReset) {
-            if (Aura.getInstance().getResetSprintMode().isSelected("Пакетный")) {
+            if (false) {
                 mc.getNetworkHandler()
                         .sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.START_SPRINTING));
             } else {
@@ -336,8 +333,8 @@ public class StrikeManager implements IMinecraft {
     }
 
     private boolean checkElytraMode(StrikerConstructor.AttackPerpetratorConfigurable config) {
-        return Aura.target != null &&
-                Aura.target.isGliding() &&
+        return null != null &&
+                false &&
                 mc.player.isGliding() &&
                 ElytraTarget.getInstance() != null &&
                 ElytraTarget.getInstance().isState();
@@ -387,7 +384,7 @@ public class StrikeManager implements IMinecraft {
         boolean shouldReset = wasSprinting && shouldResetSprintForCrit();
 
         if (shouldReset) {
-            if (Aura.getInstance().getResetSprintMode().isSelected("Пакетный")) {
+            if (false) {
                 mc.getNetworkHandler()
                         .sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.STOP_SPRINTING));
             } else {
@@ -398,7 +395,7 @@ public class StrikeManager implements IMinecraft {
         executeAttack(config);
 
         if (shouldReset) {
-            if (Aura.getInstance().getResetSprintMode().isSelected("Пакетный")) {
+            if (false) {
                 mc.getNetworkHandler()
                         .sendPacket(new ClientCommandC2SPacket(mc.player, ClientCommandC2SPacket.Mode.START_SPRINTING));
             } else {
@@ -437,7 +434,7 @@ public class StrikeManager implements IMinecraft {
     }
 
     public boolean shouldResetSprinting(StrikerConstructor.AttackPerpetratorConfigurable config) {
-        if (Aura.target == null)
+        if (null == null)
             return false;
         if (shouldWaitForEating())
             return false;
@@ -467,9 +464,8 @@ public class StrikeManager implements IMinecraft {
         }
 
         if (ticks > 0) {
-            Aura aura = Aura.getInstance();
-            boolean checkCritEnabled = aura.getCheckCrit().isValue();
-            boolean smartCritsEnabled = aura.getSmartCrits().isValue();
+            boolean checkCritEnabled = false;
+            boolean smartCritsEnabled = false;
 
             if (!checkCritEnabled)
                 return true;
@@ -505,9 +501,8 @@ public class StrikeManager implements IMinecraft {
             return true;
         }
 
-        Aura aura = Aura.getInstance();
-        boolean checkCritEnabled = aura.getCheckCrit().isValue();
-        boolean smartCritsEnabled = aura.getSmartCrits().isValue();
+        boolean checkCritEnabled = false;
+        boolean smartCritsEnabled = false;
 
         if (!checkCritEnabled)
             return true;

@@ -32,6 +32,14 @@ public class SoundManager implements IMinecraft {
     public SoundEvent CRIME = SoundEvent.of(Identifier.of("rich:crime"));
     public SoundEvent METALLIC = SoundEvent.of(Identifier.of("rich:metallic"));
     public SoundEvent WELCOME = SoundEvent.of(Identifier.of("rich:welcome"));
+    public SoundEvent DOUBLE_KILL = SoundEvent.of(Identifier.of("rich:double_kill"));
+    public SoundEvent FIRSTBLOOD = SoundEvent.of(Identifier.of("rich:firstblood"));
+    public SoundEvent KILLING_SPREE = SoundEvent.of(Identifier.of("rich:killing_spree"));
+    public SoundEvent MEGA_KILL = SoundEvent.of(Identifier.of("rich:mega_kill"));
+    public SoundEvent MONSTER_KILL = SoundEvent.of(Identifier.of("rich:monster_kill"));
+    public SoundEvent RAMPAGE = SoundEvent.of(Identifier.of("rich:rampage"));
+    public SoundEvent TRIPLE_KILL = SoundEvent.of(Identifier.of("rich:triple_kill"));
+    public SoundEvent ULTRA_KILL = SoundEvent.of(Identifier.of("rich:ultra_kill"));
 
     public void init() {
         Registry.register(Registries.SOUND_EVENT, KOLOKOLNIA_KILL.id(), KOLOKOLNIA_KILL);
@@ -46,6 +54,14 @@ public class SoundManager implements IMinecraft {
         Registry.register(Registries.SOUND_EVENT, CRIME.id(), CRIME);
         Registry.register(Registries.SOUND_EVENT, METALLIC.id(), METALLIC);
         Registry.register(Registries.SOUND_EVENT, WELCOME.id(), WELCOME);
+        Registry.register(Registries.SOUND_EVENT, DOUBLE_KILL.id(), DOUBLE_KILL);
+        Registry.register(Registries.SOUND_EVENT, FIRSTBLOOD.id(), FIRSTBLOOD);
+        Registry.register(Registries.SOUND_EVENT, KILLING_SPREE.id(), KILLING_SPREE);
+        Registry.register(Registries.SOUND_EVENT, MEGA_KILL.id(), MEGA_KILL);
+        Registry.register(Registries.SOUND_EVENT, MONSTER_KILL.id(), MONSTER_KILL);
+        Registry.register(Registries.SOUND_EVENT, RAMPAGE.id(), RAMPAGE);
+        Registry.register(Registries.SOUND_EVENT, TRIPLE_KILL.id(), TRIPLE_KILL);
+        Registry.register(Registries.SOUND_EVENT, ULTRA_KILL.id(), ULTRA_KILL);
     }
 
     public void playSound(SoundEvent sound) {

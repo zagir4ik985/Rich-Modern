@@ -21,7 +21,7 @@ public class FriendConfig {
     private final Path configPath;
 
     private FriendConfig() {
-        Path configDir = Paths.get("Rich", "configs");
+        Path configDir = Paths.get("zagaDLC", "configs");
         try {
             Files.createDirectories(configDir);
         } catch (IOException ignored) {}

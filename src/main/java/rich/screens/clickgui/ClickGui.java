@@ -243,8 +243,8 @@ public class ClickGui extends Screen implements IMinecraft {
         background.renderHeader(bgX, bgY, selectedCategory, alphaMultiplier);
         background.renderCategoryNames(bgX, bgY, selectedCategory, alphaMultiplier);
 
-        float mlX = bgX + 92f, mlY = bgY + 38f, mlW = 120f, mlH = BackgroundComponent.BG_HEIGHT - 46f;
-        float spX = bgX + 218f, spY = bgY + 38f, spW = 172f, spH = BackgroundComponent.BG_HEIGHT - 46f;
+        float mlX = bgX + 120f, mlY = bgY + 49f, mlW = 156f, mlH = BackgroundComponent.BG_HEIGHT - 46f;
+        float spX = bgX + 284f, spY = bgY + 49f, spW = 224f, spH = BackgroundComponent.BG_HEIGHT - 46f;
 
         float normalAlpha = background.getNormalPanelAlpha();
         float searchAlpha = background.getSearchPanelAlpha();
@@ -310,10 +310,10 @@ public class ClickGui extends Screen implements IMinecraft {
                     return true;
                 }
 
-                float panelX = bgX + 92f;
-                float panelY = bgY + 38f;
-                float panelW = BackgroundComponent.BG_WIDTH - 100f;
-                float panelH = BackgroundComponent.BG_HEIGHT - 46f;
+                float panelX = bgX + 120f;
+                float panelY = bgY + 49f;
+                float panelW = BackgroundComponent.BG_WIDTH - 128f;
+                float panelH = BackgroundComponent.BG_HEIGHT - 60f;
 
                 if (mx >= panelX && mx <= panelX + panelW && my >= panelY && my <= panelY + panelH) {
                     return true;
@@ -347,7 +347,7 @@ public class ClickGui extends Screen implements IMinecraft {
 //            }
 //        }
 
-        float mlX = bgX + 92f, mlY = bgY + 38f, mlW = 120f, mlH = BackgroundComponent.BG_HEIGHT - 48f;
+        float mlX = bgX + 120f, mlY = bgY + 49f, mlW = 156f, mlH = BackgroundComponent.BG_HEIGHT - 60f;
 
         if (click.button() == 2) {
             if (isAnyBindListening()) {
@@ -395,7 +395,7 @@ public class ClickGui extends Screen implements IMinecraft {
                 return true;
             }
 
-            float spX = bgX + 218f, spY = bgY + 38f, spW = 172f, spH = BackgroundComponent.BG_HEIGHT - 48f;
+            float spX = bgX + 284f, spY = bgY + 49f, spW = 224f, spH = BackgroundComponent.BG_HEIGHT - 60f;
             if (mx >= spX && mx <= spX + spW && my >= spY && my <= spY + spH) {
                 for (AbstractSettingComponent c : moduleComponent.getSettingComponents()) {
                     if (c.getSetting().isVisible() && c.mouseClicked(mx, my, click.button())) return true;
@@ -452,10 +452,10 @@ public class ClickGui extends Screen implements IMinecraft {
         float bgX = bg[0], bgY = bg[1];
 
         if (background.isSearchActive()) {
-            float panelX = bgX + 92f;
-            float panelY = bgY + 38f;
-            float panelW = BackgroundComponent.BG_WIDTH - 100f;
-            float panelH = BackgroundComponent.BG_HEIGHT - 46f;
+            float panelX = bgX + 120f;
+            float panelY = bgY + 49f;
+            float panelW = BackgroundComponent.BG_WIDTH - 128f;
+            float panelH = BackgroundComponent.BG_HEIGHT - 60f;
 
             if (mx >= panelX && mx <= panelX + panelW && my >= panelY && my <= panelY + panelH) {
                 background.handleSearchScroll(vertical, panelH);
@@ -475,13 +475,13 @@ public class ClickGui extends Screen implements IMinecraft {
 //            }
 //        }
 
-        float mlX = bgX + 92f, mlY = bgY + 38f, mlW = 120f, mlH = BackgroundComponent.BG_HEIGHT - 48f;
+        float mlX = bgX + 120f, mlY = bgY + 49f, mlW = 156f, mlH = BackgroundComponent.BG_HEIGHT - 60f;
         if (mx >= mlX && mx <= mlX + mlW && my >= mlY && my <= mlY + mlH) {
             moduleComponent.handleModuleScroll(vertical, mlH);
             return true;
         }
 
-        float spX = bgX + 218f, spY = bgY + 38f, spW = 172f, spH = BackgroundComponent.BG_HEIGHT - 48f;
+        float spX = bgX + 284f, spY = bgY + 49f, spW = 224f, spH = BackgroundComponent.BG_HEIGHT - 60f;
         if (mx >= spX && mx <= spX + spW && my >= spY && my <= spY + spH) {
             moduleComponent.handleSettingScroll(vertical, spH);
             return true;

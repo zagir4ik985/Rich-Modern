@@ -1,7 +1,6 @@
 package rich.modules.impl.combat.aura.rotations;
 
 import rich.Initialization;
-import rich.modules.impl.combat.Aura;
 import rich.modules.impl.combat.aura.Angle;
 import rich.modules.impl.combat.aura.MathAngle;
 import rich.modules.impl.combat.aura.attack.StrikeManager;
@@ -39,7 +38,6 @@ public class FTAngle extends RotateConstructor {
         StrikeManager attackHandler = Initialization.getInstance().getManager().getAttackPerpetrator().getAttackHandler();
         StopWatch attackTimer = attackHandler.getAttackTimer();
         int count = attackHandler.getCount();
-        Aura aura = Aura.getInstance();
 
         long now = System.currentTimeMillis();
 
@@ -95,7 +93,7 @@ public class FTAngle extends RotateConstructor {
         currentJitterPitch += (targetJitterPitch - currentJitterPitch) * jitterSmoothSpeed;
 
         if (entity != null) {
-            float speed = attackHandler.canAttack(aura.getConfig(), 0) ? 0.9f : random.nextBoolean() ? 0.1F : 0.2F;
+            float speed = attackHandler.canAttack(null, 0) ? 0.9f : random.nextBoolean() ? 0.1F : 0.2F;
 
             float lineYaw = (Math.abs(yawDelta / rotationDifference) * 180);
             float linePitch = (Math.abs(pitchDelta / rotationDifference) * 180);

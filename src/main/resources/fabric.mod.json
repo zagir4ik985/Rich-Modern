@@ -2,16 +2,15 @@
   "schemaVersion": 1,
   "id": "copyright",
   "version": "${version}",
-  "name": "copyright client",
+  "name": "zagaDLC",
   "description": "Custom Minecraft client with shader-based rendering",
-  "authors": ["You"],
+  "authors": ["defzaga"],
   "contact": {},
   "license": "MIT",
   "icon": "assets/rich/textures/capes/cape.png",
   "environment": "client",
   "entrypoints": {
     "preLaunch": [
-      "rich.util.mods.config.wave.ResourceManager",
       "rich.util.mods.config.wave.WaveCapesConfigOverride"
     ],
     "client": [
@@ -19,7 +18,8 @@
     ]
   },
   "mixins": [
-    "mixins.json"
+    "mixins.json",
+    "holdmyitems.mixins.json"
   ],
   "depends": {
     "fabricloader": ">=0.18.4",

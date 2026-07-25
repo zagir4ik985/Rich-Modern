@@ -37,6 +37,7 @@ import rich.util.Instance;
 import rich.util.math.Projection;
 import rich.util.modules.esp.RwPrefix;
 import rich.util.network.Network;
+import rich.util.game.EntityCache;
 import rich.util.render.Render2D;
 import rich.util.render.font.Fonts;
 import rich.util.render.item.ItemRender;
@@ -102,10 +103,11 @@ public class Esp extends ModuleStructure {
     public void onTick(TickEvent e) {
         players.clear();
         if (mc.world != null) {
-            mc.world.getPlayers().stream()
-                    .filter(player -> player != mc.player)
-                    .filter(player -> player.getCustomName() == null || !player.getCustomName().getString().startsWith("Ghost_"))
-                    .forEach(players::add);
+            for (PlayerEntity player : EntityCache.getInstance().getPlayers()) {
+                if (player.getCustomName() == null || !player.getCustomName().getString().startsWith("Ghost_")) {
+                    players.add(player);
+                }
+            }
         }
     }
 
@@ -123,7 +125,7 @@ public class Esp extends ModuleStructure {
             double interpZ = MathHelper.lerp(tickDelta, player.lastZ, player.getZ());
             Vec3d interpCenter = new Vec3d(interpX, interpY, interpZ);
 
-            float distance = (float) mc.gameRenderer.getCamera().getCameraPos().distanceTo(interpCenter);
+            float distance = (float) mc.gameRenderer.getCamera().getCameraPos().squaredDistanceTo(interpCenter);
             if (distance < 1) continue;
 
             boolean friend = FriendUtils.isFriend(player);
@@ -152,7 +154,7 @@ public class Esp extends ModuleStructure {
                 if (player.getCustomName() != null && player.getCustomName().getString().startsWith("Ghost_")) continue;
 
                 Vector4d vec4d = Projection.getVector4D(player, tickDelta);
-                float distance = (float) mc.gameRenderer.getCamera().getCameraPos().distanceTo(player.getBoundingBox().getCenter());
+                float distance = (float) mc.gameRenderer.getCamera().getCameraPos().squaredDistanceTo(player.getBoundingBox().getCenter());
                 boolean friend = FriendUtils.isFriend(player);
 
                 if (distance < 1) continue;

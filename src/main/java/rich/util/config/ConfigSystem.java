@@ -52,7 +52,7 @@ public class ConfigSystem {
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
             Logger.info("AutoConfiguration: Shutdown detected, saving...");
             shutdown();
-        }, "Rich-ConfigShutdown"));
+        }, "zagaDLC-ConfigShutdown"));
     }
 
     public void save() {

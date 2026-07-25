@@ -21,7 +21,7 @@ public class DragConfig {
     private final Path configPath;
 
     private DragConfig() {
-        Path configDir = Paths.get("Rich", "configs");
+        Path configDir = Paths.get("zagaDLC", "configs");
         try {
             Files.createDirectories(configDir);
         } catch (IOException ignored) {}

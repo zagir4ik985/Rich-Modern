@@ -43,7 +43,7 @@ public class AutoBuyConfig {
     }
 
     private AutoBuyConfig() {
-        Path configDir = Paths.get("Rich", "configs", "autobuy");
+        Path configDir = Paths.get("zagaDLC", "configs", "autobuy");
         try {
             Files.createDirectories(configDir);
         } catch (IOException ignored) {}

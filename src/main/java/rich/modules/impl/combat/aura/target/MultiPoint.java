@@ -10,7 +10,6 @@ import net.minecraft.util.math.Box;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.RaycastContext;
 import rich.IMinecraft;
-import rich.modules.impl.combat.Aura;
 import rich.modules.impl.combat.aura.Angle;
 import rich.modules.impl.combat.aura.MathAngle;
 
@@ -31,7 +30,7 @@ public class MultiPoint implements IMinecraft {
         Pair<List<Vec3d>, Box> candidatePoints = generateCandidatePoints(entity, maxDistance, ignoreWalls);
         Vec3d bestVector = findBestVector(candidatePoints.getLeft(), initialAngle);
 
-        if (Aura.getInstance().options.isSelected("Интерполяция высоты") && entity != null) {
+        if (false && entity != null) {
             bestVector = Vector.hitbox(entity, 1, 1.1F, 1, 6);
         }
 

@@ -9,6 +9,7 @@ import rich.modules.module.ModuleStructure;
 import rich.modules.module.category.ModuleCategory;
 import rich.modules.module.setting.implement.BooleanSetting;
 import rich.modules.module.setting.implement.TextSetting;
+import rich.util.Instance;
 import rich.util.repository.friend.FriendUtils;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
@@ -20,6 +21,19 @@ public class NameProtect extends ModuleStructure {
     public NameProtect() {
         super("NameProtect","Name Protect", ModuleCategory.PLAYER);
         settings(friendsSetting);
+    }
+
+    public static boolean isEnabled() {
+        NameProtect instance = Instance.get(NameProtect.class);
+        return instance != null && instance.isState();
+    }
+
+    public static String getCustomName() {
+        NameProtect instance = Instance.get(NameProtect.class);
+        if (instance != null && instance.nameSetting != null) {
+            return instance.nameSetting.getText();
+        }
+        return "Unknown";
     }
 
     @EventHandler
