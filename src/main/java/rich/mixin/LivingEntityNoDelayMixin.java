@@ -16,6 +16,9 @@ public class LivingEntityNoDelayMixin {
     @Shadow
     private int jumpingCooldown;
 
+    @Shadow
+    private boolean jumping;
+
     @Inject(method = "tickMovement", at = @At("HEAD"))
     private void onTickMovementHead(CallbackInfo ci) {
         if ((Object) this instanceof PlayerEntity player) {
@@ -27,5 +30,21 @@ public class LivingEntityNoDelayMixin {
                 }
             }
         }
+    }
+
+    public int getJumpingCooldown() {
+        return this.jumpingCooldown;
+    }
+
+    public boolean isJumping() {
+        return this.jumping;
+    }
+
+    public void setJumpingCooldown(int value) {
+        this.jumpingCooldown = value;
+    }
+
+    public void setJumping(boolean value) {
+        this.jumping = value;
     }
 }

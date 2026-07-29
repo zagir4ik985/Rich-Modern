@@ -26,15 +26,8 @@ public class MultiPlayerGameModeNoDelayMixin {
         }
     }
 
-    @Inject(method = "startDestroyBlock", at = @At("HEAD"))
+    @Inject(method = "attackBlock", at = @At("HEAD"))
     private void onStartDestroyHead(CallbackInfoReturnable<Boolean> cir) {
-        if (isNoDelayActive()) {
-            this.blockBreakingCooldown = 0;
-        }
-    }
-
-    @Inject(method = "continueDestroyBlock", at = @At("HEAD"))
-    private void onContinueDestroyHead(CallbackInfoReturnable<Boolean> cir) {
         if (isNoDelayActive()) {
             this.blockBreakingCooldown = 0;
         }
