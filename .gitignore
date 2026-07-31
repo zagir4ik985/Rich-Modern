@@ -1,0 +1,8 @@
+build/
+.gradle/
+libs/
+launcher/output/
+launcher/ZagaLoader/bin/
+launcher/ZagaLoader/obj/
+.idea/
+*.class
