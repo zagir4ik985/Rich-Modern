@@ -35,7 +35,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <EmbeddedResource Include="..\..\loader\src\main\resources\rockstar-1.0.0.jar.encrypted" LogicalName="rockstar-1.0.0.jar.encrypted" />
+    <EmbeddedResource Include="..\..\loader\src\main\resources\rich-1.0.01.jar.encrypted" LogicalName="rich-1.0.01.jar.encrypted" />
     <EmbeddedResource Include="..\..\loader\src\main\resources\baritone-api-fabric-1.13.1.jar" LogicalName="baritone-api-fabric-1.13.1.jar" />
     <EmbeddedResource Include="web\index.html" LogicalName="web.index.html" />
   </ItemGroup>

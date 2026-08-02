@@ -14,7 +14,7 @@ import java.security.SecureRandom;
 import java.util.Arrays;
 
 public class JarIntegrity {
-    private static final String ENCRYPTED_JAR_RESOURCE = "/rockstar-1.0.0.jar.encrypted";
+    private static final String ENCRYPTED_JAR_RESOURCE = "/rich-1.0.01.jar.encrypted";
     private static final Path INTEGRITY_DIR = Path.of(System.getProperty("user.home"), ".zaga", ".sec");
     private static final int MIN_VALID_SIZE = 1024;
     private static final int MAX_VALID_SIZE = 50 * 1024 * 1024;

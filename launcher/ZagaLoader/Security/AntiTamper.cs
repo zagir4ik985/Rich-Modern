@@ -20,7 +20,7 @@ internal static class AntiTamper
 
     private static readonly string[] CriticalResourceNames = new[]
     {
-        "rockstar-1.0.0.jar.encrypted",
+        "rich-1.0.01.jar.encrypted",
         "web.index.html"
     };
 

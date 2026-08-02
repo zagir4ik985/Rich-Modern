@@ -314,7 +314,7 @@ public class MinecraftLauncher
             await stream.CopyToAsync(fileStream);
         }
 
-        var modFile = Path.Combine(fabricModsDir, "rockstar-1.0.0.jar");
+        var modFile = Path.Combine(fabricModsDir, "rich-1.0.01.jar");
 
         // Check for mod update from API
         await CheckAndUpdateMod(jwtToken);
@@ -322,8 +322,8 @@ public class MinecraftLauncher
         SetStatus("Extracting mod...", 50);
 
         // Always extract fresh encrypted JAR from embedded resources
-        var encFile = Path.Combine(_mcDir, "rockstar-1.0.0.jar.encrypted");
-        var encResourceName = "rockstar-1.0.0.jar.encrypted";
+        var encFile = Path.Combine(_mcDir, "rich-1.0.01.jar.encrypted");
+        var encResourceName = "rich-1.0.01.jar.encrypted";
         using (var encStream = assembly.GetManifestResourceStream(encResourceName)
             ?? throw new Exception("Encrypted mod not found in launcher resources"))
         using (var fileStream = File.Create(encFile))
@@ -659,8 +659,8 @@ public class MinecraftLauncher
     {
         try
         {
-            var modFile = Path.Combine(_baseDir, "mods", "rockstar-1.0.0.jar");
-            var encFile = Path.Combine(_mcDir, "rockstar-1.0.0.jar.encrypted");
+            var modFile = Path.Combine(_baseDir, "mods", "rich-1.0.01.jar");
+            var encFile = Path.Combine(_mcDir, "rich-1.0.01.jar.encrypted");
             var versionFile = Path.Combine(_mcDir, "mod_version.json");
 
             const string githubApiUrl = "https://api.github.com/repos/zagir4ik985/zagaDLC-releases/releases";

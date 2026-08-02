@@ -1547,13 +1547,13 @@ public class LoginWindow extends JFrame {
     }
 
     private void installRockstarMod(File modsDir) throws Exception {
-        File modFile = new File(modsDir, "rockstar-1.0.0.jar");
+        File modFile = new File(modsDir, "rich-1.0.01.jar");
 
         setStatus(loadingStatusLabel, "Decrypting zagaDLC client...", textDim());
         setProgress(0);
 
         byte[] encBytes;
-        try (InputStream encStream = getClass().getResourceAsStream("/rockstar-1.0.0.jar.encrypted")) {
+        try (InputStream encStream = getClass().getResourceAsStream("/rich-1.0.01.jar.encrypted")) {
             if (encStream == null) {
                 throw new Exception("Client JAR not bundled in loader. Rebuild loader.");
             }
