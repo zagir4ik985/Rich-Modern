@@ -1,0 +1,203 @@
+plugins {
+    id 'java'
+    id 'application'
+}
+
+group = 'zaga'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'com.google.code.gson:gson:2.10.1'
+}
+
+application {
+    mainClass = 'zaga.Main'
+}
+
+jar {
+    manifest {
+        attributes 'Main-Class': 'zaga.Main'
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+task fatJar(type: Jar) {
+    archiveClassifier = 'all'
+    manifest {
+        attributes 'Main-Class': 'zaga.Main'
+    }
+    from {
+        configurations.runtimeClasspath.collect { it.isDirectory() ? it : zipTree(it) }
+    }
+    with jar
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+task obfuscate(dependsOn: fatJar) {
+    doLast {
+        def proguardHome = file(System.getProperty('java.io.tmpdir') + '/proguard/proguard-7.6.1')
+        def proguardBat = file("${proguardHome}/bin/proguard.bat")
+        def inputJar = file("${buildDir}/libs/zaga-loader-1.0.0-all.jar")
+        def obfJar = file("${buildDir}/libs/zaga-loader-1.0.0-obf.jar")
+        def configTmp = file(System.getProperty('java.io.tmpdir') + '/proguard.pro')
+        def jdkLibs = file(System.getProperty('java.io.tmpdir') + '/jdk-libs')
+        def sevenZip = 'C:\\Program Files\\7-Zip\\7z.exe'
+
+        // Конвертируем jmod в jar (один раз)
+        def jmodDir = file("${System.getProperty('java.home')}/../jmods")
+        if (!jdkLibs.exists()) jdkLibs.mkdirs()
+
+        ['java.base', 'java.desktop', 'java.net.http'].each { name ->
+            def jarFile = file("${jdkLibs}/${name}.jar")
+            if (!jarFile.exists()) {
+                def jmodFile = file("${jmodDir}/${name}.jmod")
+                def workDir = file("${jdkLibs}/${name}.work")
+                workDir.mkdirs()
+                exec {
+                    commandLine sevenZip, 'x', jmodFile.path, "-o${workDir.path}", '-y'
+                }
+                def classesDir = file("${workDir}/classes")
+                if (classesDir.exists()) {
+                    exec {
+                        workingDir classesDir
+                        commandLine "${System.getProperty('java.home')}/../bin/jar.exe", 'cf', jarFile.path, '.'
+                    }
+                }
+                workDir.deleteDir()
+            }
+        }
+
+        def libJars = jdkLibs.listFiles().findAll { it.name.endsWith('.jar') }.collect { it.path.replace('\\', '/') }
+        def libLines = libJars.collect { "-libraryjars ${it}" }.join('\n')
+
+        def configText = "-injars ${inputJar.toPath().toString().replace('\\', '/')}\n" +
+            "-outjars ${obfJar.toPath().toString().replace('\\', '/')}\n\n" +
+            libLines + "\n\n" +
+            "-dontwarn\n-dontoptimize\n-dontpreverify\n-obfuscation\n\n" +
+            "-keepattributes Signature,InnerClasses,EnclosingMethod,Exceptions,Deprecated\n\n" +
+            "-keep public class zaga.Main {\n    public static void main(java.lang.String[]);\n}\n\n" +
+            "-keep class com.google.gson.** { *; }\n" +
+            "-keep class zaga.api.ApiClient {\n    public <methods>;\n}\n" +
+            "-keep class zaga.api.ApiClient\$* { *; }\n\n" +
+            "-repackageclasses z\n-allowaccessmodification\n-overloadaggressively\n"
+
+        configTmp.text = configText
+
+        exec {
+            commandLine proguardBat, "@${configTmp}"
+        }
+
+        if (obfJar.exists()) {
+            inputJar.delete()
+            obfJar.renameTo(inputJar)
+        }
+        configTmp.delete()
+    }
+}
+
+task jpackage(type: Exec) {
+    dependsOn fatJar
+    def inputJar = file("${buildDir}/libs/zaga-loader-1.0.0-all.jar")
+    def outputDir = file("${buildDir}/jpackage")
+    def iconFile = file("src/main/resources/logo.ico")
+
+    def cmd = [
+        'C:\\Program Files\\Java\\jdk-21.0.10\\bin\\jpackage',
+        '--input', inputJar.parent,
+        '--main-jar', inputJar.name,
+        '--main-class', 'zaga.Main',
+        '--type', 'app-image',
+        '--dest', outputDir,
+        '--name', 'zagaDLC',
+        '--java-options', '-Xmx256m',
+        '--java-options', '-Dfile.encoding=UTF-8',
+        '--java-options', '-Djava.net.preferIPv4Stack=true',
+    ]
+
+    if (iconFile.exists()) {
+        cmd.addAll(['--icon', iconFile])
+    }
+
+    commandLine cmd
+}
+
+task buildExe(dependsOn: jpackage) {
+    doLast {
+        def buildDir = file("${project.buildDir}/jpackage")
+        def appDir = file("${buildDir}/zagaDLC")
+        def tempDir = file(System.getProperty('java.io.tmpdir') + '/zagaDLC-build')
+        def nsiFile = file(System.getProperty('java.io.tmpdir') + '/installer.nsi')
+        def nsisExe = 'C:\\Program Files (x86)\\NSIS\\Bin\\makensis.exe'
+        def tempExe = file(System.getProperty('java.io.tmpdir') + '/zagaDLC-Setup.exe')
+        def outputExe = file("${buildDir}/zagaDLC-Setup.exe")
+
+        if (tempDir.exists()) tempDir.deleteDir()
+        ant.copy(todir: tempDir) { fileset(dir: appDir) }
+
+        nsiFile.text = """!include "MUI2.nsh"
+
+Name "zagaDLC Loader"
+OutFile "${tempExe.absolutePath.replace('\\', '\\\\')}"
+        InstallDir "\$LOCALAPPDATA\\\\zagaDLC"
+        InstallDirRegKey HKCU "Software\\\\zagaDLC" "InstallDir"
+RequestExecutionLevel user
+
+!define MUI_ABORTWARNING
+
+!insertmacro MUI_PAGE_WELCOME
+!insertmacro MUI_PAGE_DIRECTORY
+!insertmacro MUI_PAGE_INSTFILES
+!insertmacro MUI_PAGE_FINISH
+
+!insertmacro MUI_UNPAGE_CONFIRM
+!insertmacro MUI_UNPAGE_INSTFILES
+
+!insertmacro MUI_LANGUAGE "Russian"
+!insertmacro MUI_LANGUAGE "English"
+
+Section "Install"
+    DetailPrint "Closing zagaDLC processes..."
+    nsExec::ExecToLog 'taskkill /F /IM zagaDLC.exe /T'
+    Sleep 1000
+
+    SetOutPath "\$INSTDIR"
+    File /r "${tempDir.absolutePath.replace('\\', '\\\\')}\\\\*.*"
+
+    WriteUninstaller "\$INSTDIR\\\\Uninstall.exe"
+    WriteRegStr HKCU "Software\\\\zagaDLC" "InstallDir" "\$INSTDIR"
+    CreateShortcut "\$DESKTOP\\\\zagaDLC.lnk" "\$INSTDIR\\\\zagaDLC.exe"
+
+    Exec "\$INSTDIR\\\\zagaDLC.exe"
+SectionEnd
+
+Section "Uninstall"
+    nsExec::ExecToLog 'taskkill /F /IM zagaDLC.exe /T'
+    Sleep 500
+    Delete "\$INSTDIR\\\\zagaDLC.exe"
+    Delete "\$INSTDIR\\\\Uninstall.exe"
+    RMDir /r "\$INSTDIR\\\\game"
+    Delete "\$DESKTOP\\\\zagaDLC.lnk"
+    DeleteRegKey HKCU "Software\\\\zagaDLC"
+SectionEnd
+"""
+
+        exec {
+            commandLine nsisExe, nsiFile
+        }
+
+        ant.copy(file: tempExe, tofile: outputExe)
+
+        tempDir.deleteDir()
+        nsiFile.delete()
+        tempExe.delete()
+    }
+}

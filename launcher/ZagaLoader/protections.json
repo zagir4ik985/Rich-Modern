@@ -1,0 +1,19 @@
+{
+  "Protections": [
+    "StringsEncryption",
+    "BitDotNet",
+    "BitMethodDotnet",
+    "DotNetHook",
+    "CallToCalli",
+    "ObjectReturnType",
+    "NoNamespaces",
+    "FullRenamer",
+    "AntiDebugBreakpoints",
+    "AntiDecompiler",
+    "AntiDe4dot",
+    "AntiILdasm",
+    "BillionNops",
+    "BitMono",
+    "BitTimeDateStamp"
+  ]
+}

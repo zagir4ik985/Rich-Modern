@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=900,height=600,initial-scale=1">
+    <title>zagaDLC</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg: #0a0a12;
+            --bg2: #0f0f1a;
+            --card: #12121f;
+            --border: #1a1a2e;
+            --border2: #252540;
+            --text: #e8e8f0;
+            --text-dim: #6b6b8a;
+            --accent: #7c5cff;
+            --accent2: #5b8aff;
+            --accent-glow: rgba(124, 92, 255, 0.3);
+            --green: #4ade80;
+            --red: #f43f5e;
+            --gradient: linear-gradient(135deg, #7c5cff 0%, #5b8aff 50%, #38bdf8 100%);
+        }
+
+        html, body {
+            width: 900px; height: 600px;
+            overflow: hidden; font-family: 'Inter', sans-serif;
+            background: var(--bg); color: var(--text);
+            user-select: none; -webkit-user-select: none;
+        }
+
+        #root { width: 100%; height: 100%; position: relative; }
+
+        /* ==================== PARTICLES BG ==================== */
+        .particles {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 0; overflow: hidden;
+        }
+        .particle {
+            position: absolute; border-radius: 50%;
+            background: var(--accent); opacity: 0.08;
+            animation: float linear infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.08; }
+            90% { opacity: 0.08; }
+            100% { transform: translateY(-10vh) rotate(720deg); opacity: 0; }
+        }
+
+        /* ==================== GLOW ORB ==================== */
+        .glow-orb {
+            position: absolute; width: 300px; height: 300px;
+            border-radius: 50%; filter: blur(80px); opacity: 0.15;
+            background: var(--gradient); z-index: 0;
+            animation: orbMove 8s ease-in-out infinite alternate;
+        }
+        .glow-orb.orb1 { top: -100px; right: -50px; }
+        .glow-orb.orb2 { bottom: -100px; left: -50px; animation-delay: -4s; opacity: 0.1; }
+        @keyframes orbMove {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(30px, 20px) scale(1.1); }
+        }
+
+        /* ==================== TITLE BAR ==================== */
+        .titlebar {
+            position: absolute; top: 0; left: 0; right: 0; height: 36px;
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 12px; z-index: 100;
+        }
+        .titlebar-title {
+            font-size: 12px; font-weight: 600; color: var(--text-dim);
+            letter-spacing: 1px;
+        }
+        .titlebar-buttons { display: flex; gap: 4px; }
+        .titlebar-btn {
+            width: 28px; height: 28px; border: none; background: transparent;
+            color: var(--text-dim); font-size: 14px; cursor: pointer;
+            border-radius: 6px; display: flex; align-items: center; justify-content: center;
+            transition: all 0.2s;
+        }
+        .titlebar-btn:hover { background: rgba(255,255,255,0.06); color: var(--text); }
+        .titlebar-btn.close:hover { background: var(--red); color: white; }
+
+        /* ==================== PAGE TRANSITIONS ==================== */
+        .page {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            transition: opacity 0.4s ease, transform 0.4s ease;
+            z-index: 1;
+        }
+        .page.hidden { opacity: 0; pointer-events: none; transform: scale(0.98); }
+        .page.visible { opacity: 1; pointer-events: all; transform: scale(1); }
+
+        /* ==================== LOGIN PAGE ==================== */
+        .login-page {
+            display: flex; align-items: center; justify-content: center;
+        }
+        .login-container {
+            width: 380px; padding: 40px;
+            background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; position: relative; z-index: 2;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+        }
+        .login-logo {
+            text-align: center; margin-bottom: 32px;
+        }
+        .login-logo h1 {
+            font-size: 32px; font-weight: 800;
+            background: var(--gradient); -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent; background-clip: text;
+            letter-spacing: -0.5px;
+        }
+        .login-logo p {
+            font-size: 12px; color: var(--text-dim); margin-top: 4px;
+            letter-spacing: 2px; text-transform: uppercase;
+        }
+        .input-group { margin-bottom: 16px; position: relative; }
+        .input-group label {
+            display: block; font-size: 11px; font-weight: 600;
+            color: var(--text-dim); margin-bottom: 6px;
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+        .input-group input {
+            width: 100%; height: 44px; padding: 0 14px;
+            background: var(--bg2); border: 1px solid var(--border);
+            border-radius: 10px; color: var(--text);
+            font-family: 'Inter', sans-serif; font-size: 14px;
+            outline: none; transition: all 0.3s;
+        }
+        .input-group input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+        .input-group input::placeholder { color: var(--text-dim); opacity: 0.5; }
+
+        .btn {
+            width: 100%; height: 46px; border: none; border-radius: 10px;
+            font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 600;
+            cursor: pointer; transition: all 0.3s; position: relative; overflow: hidden;
+        }
+        .btn-primary {
+            background: var(--gradient); color: white;
+            box-shadow: 0 4px 16px var(--accent-glow);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px var(--accent-glow);
+        }
+        .btn-primary:active { transform: translateY(0); }
+        .btn-primary:disabled {
+            opacity: 0.5; cursor: not-allowed; transform: none;
+        }
+
+        .btn-secondary {
+            background: transparent; color: var(--text-dim);
+            border: 1px solid var(--border); margin-top: 10px;
+        }
+        .btn-secondary:hover {
+            border-color: var(--accent); color: var(--text);
+            background: rgba(124, 92, 255, 0.05);
+        }
+
+        .error-msg {
+            color: var(--red); font-size: 12px; text-align: center;
+            margin-top: 12px; min-height: 16px;
+        }
+        .success-msg {
+            color: var(--green); font-size: 12px; text-align: center;
+            margin-top: 12px; min-height: 16px;
+        }
+
+        .login-tabs {
+            display: flex; gap: 4px; margin-bottom: 24px;
+            background: var(--bg); border-radius: 10px; padding: 4px;
+        }
+        .login-tab {
+            flex: 1; height: 36px; border: none; border-radius: 8px;
+            background: transparent; color: var(--text-dim);
+            font-family: 'Inter', sans-serif; font-size: 13px; font-weight: 500;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .login-tab.active {
+            background: var(--card); color: var(--text);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+
+        /* ==================== MAIN PAGE ==================== */
+        .main-page {
+            display: flex; flex-direction: column; padding: 36px 40px;
+        }
+        .main-header {
+            display: flex; align-items: center; justify-content: space-between;
+            margin-bottom: 32px;
+        }
+        .user-info {
+            display: flex; align-items: center; gap: 14px;
+        }
+        .user-avatar {
+            width: 48px; height: 48px; border-radius: 12px;
+            background: var(--gradient); display: flex;
+            align-items: center; justify-content: center;
+            font-size: 20px; font-weight: 700; color: white;
+        }
+        .user-name { font-size: 18px; font-weight: 600; }
+        .user-uid {
+            font-size: 12px; color: var(--text-dim);
+            font-family: 'JetBrains Mono', monospace;
+        }
+        .user-expiry {
+            font-size: 11px; color: var(--text-dim); margin-top: 2px;
+        }
+        .user-expiry.expired { color: var(--red); font-weight: 600; }
+
+        .logout-btn {
+            padding: 8px 16px; border: 1px solid var(--border);
+            border-radius: 8px; background: transparent;
+            color: var(--text-dim); font-family: 'Inter', sans-serif;
+            font-size: 12px; cursor: pointer; transition: all 0.2s;
+        }
+        .logout-btn:hover {
+            border-color: var(--red); color: var(--red);
+            background: rgba(244, 63, 94, 0.05);
+        }
+
+        /* ==================== STATUS CARD ==================== */
+        .status-card {
+            flex: 1; background: var(--card); border: 1px solid var(--border);
+            border-radius: 16px; padding: 32px;
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; position: relative; overflow: hidden;
+        }
+        .status-icon {
+            width: 72px; height: 72px; border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px; font-size: 32px;
+            transition: all 0.5s;
+        }
+        .status-icon.ready {
+            background: rgba(74, 222, 128, 0.1);
+            border: 1px solid rgba(74, 222, 128, 0.2);
+        }
+        .status-icon.loading {
+            background: rgba(124, 92, 255, 0.1);
+            border: 1px solid rgba(124, 92, 255, 0.2);
+            animation: pulse 2s ease-in-out infinite;
+        }
+        .status-icon.error {
+            background: rgba(244, 63, 94, 0.1);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+        }
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(124, 92, 255, 0.2); }
+            50% { box-shadow: 0 0 0 12px rgba(124, 92, 255, 0); }
+        }
+
+        .status-title {
+            font-size: 22px; font-weight: 700; margin-bottom: 6px;
+        }
+        .status-detail {
+            font-size: 13px; color: var(--text-dim); margin-bottom: 24px;
+            text-align: center; max-width: 400px;
+        }
+
+        /* ==================== PROGRESS BAR ==================== */
+        .progress-container {
+            width: 320px; margin-bottom: 8px;
+        }
+        .progress-bar {
+            width: 100%; height: 4px; background: var(--bg);
+            border-radius: 4px; overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%; background: var(--gradient);
+            border-radius: 4px; transition: width 0.3s ease;
+            width: 0%;
+        }
+        .progress-text {
+            font-size: 11px; color: var(--text-dim); text-align: center;
+            margin-top: 6px; font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ==================== PLAY BUTTON ==================== */
+        .play-btn {
+            width: 280px; height: 56px; border: none; border-radius: 14px;
+            background: var(--gradient); color: white;
+            font-family: 'Inter', sans-serif; font-size: 18px; font-weight: 700;
+            cursor: pointer; transition: all 0.3s; letter-spacing: 2px;
+            box-shadow: 0 4px 24px var(--accent-glow);
+            position: relative; overflow: hidden;
+        }
+        .play-btn::before {
+            content: ''; position: absolute; top: 0; left: -100%;
+            width: 100%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+            transition: left 0.5s;
+        }
+        .play-btn:hover::before { left: 100%; }
+        .play-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px var(--accent-glow);
+        }
+        .play-btn:active { transform: translateY(0); }
+        .play-btn:disabled {
+            opacity: 0.4; cursor: not-allowed; transform: none;
+            box-shadow: none;
+        }
+
+        /* ==================== VERSION TAG ==================== */
+        .version-tag {
+            position: absolute; bottom: 16px; right: 20px;
+            font-size: 11px; color: var(--text-dim); opacity: 0.4;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* ==================== SPINNER ==================== */
+        .spinner {
+            width: 20px; height: 20px; border: 2px solid rgba(255,255,255,0.2);
+            border-top-color: white; border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block; vertical-align: middle; margin-right: 8px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ==================== QUOTES ==================== */
+        .quote {
+            position: absolute; bottom: 20px; left: 40px;
+            font-size: 12px; color: var(--text-dim); opacity: 0.3;
+            font-style: italic; max-width: 300px;
+        }
+    </style>
+</head>
+<body>
+    <div id="root">
+        <!-- Background effects -->
+        <div class="particles" id="particles"></div>
+        <div class="glow-orb orb1"></div>
+        <div class="glow-orb orb2"></div>
+
+        <!-- Title bar -->
+        <div class="titlebar">
+            <span class="titlebar-title">ZAGADLC</span>
+            <div class="titlebar-buttons">
+                <button class="titlebar-btn" onclick="sendToCsharp('minimize')">&#8211;</button>
+                <button class="titlebar-btn close" onclick="sendToCsharp('close')">&#10005;</button>
+            </div>
+        </div>
+
+        <!-- LOGIN PAGE -->
+        <div class="page login-page visible" id="loginPage">
+            <div class="login-container">
+                <div class="login-logo">
+                    <h1>zagaDLC</h1>
+                    <p>Minecraft 1.21.11</p>
+                </div>
+
+                <div class="login-tabs">
+                    <button class="login-tab active" id="tabLogin" onclick="switchTab('login')">Login</button>
+                    <button class="login-tab" id="tabRegister" onclick="switchTab('register')">Register</button>
+                </div>
+
+                <!-- Login form -->
+                <div id="loginForm">
+                    <div class="input-group">
+                        <label>Username</label>
+                        <input type="text" id="loginUser" placeholder="Enter username" autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPass" placeholder="Enter password">
+                    </div>
+                    <button class="btn btn-primary" id="loginBtn" onclick="doLogin()">LOGIN</button>
+                    <div class="error-msg" id="loginError"></div>
+                </div>
+
+                <!-- Register form -->
+                <div id="registerForm" style="display:none">
+                    <div class="input-group">
+                        <label>Username</label>
+                        <input type="text" id="regUser" placeholder="Choose username" autocomplete="off">
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <input type="password" id="regPass" placeholder="Choose password">
+                    </div>
+                    <div class="input-group">
+                        <label>Confirm</label>
+                        <input type="password" id="regConfirm" placeholder="Repeat password">
+                    </div>
+                    <button class="btn btn-primary" id="regBtn" onclick="doRegister()">REGISTER</button>
+                    <div class="error-msg" id="regError"></div>
+                    <div class="success-msg" id="regSuccess"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- MAIN PAGE -->
+        <div class="page main-page hidden" id="mainPage">
+            <div class="main-header">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">?</div>
+                    <div>
+                        <div class="user-name" id="userName">User</div>
+                        <div class="user-uid" id="userUid">UID: ---</div>
+                        <div class="user-expiry" id="userExpiry"></div>
+                    </div>
+                </div>
+                <button class="logout-btn" onclick="doLogout()">Logout</button>
+            </div>
+
+            <div class="status-card">
+                <div class="status-icon ready" id="statusIcon">&#10003;</div>
+                <div class="status-title" id="statusTitle">Ready to play</div>
+                <div class="status-detail" id="statusDetail">Press PLAY to launch Minecraft</div>
+
+                <div class="progress-container" id="progressContainer" style="display:none">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                    <div class="progress-text" id="progressText"></div>
+                </div>
+
+                <button class="play-btn" id="playBtn" onclick="doPlay()" disabled>PLAY</button>
+
+                <div class="version-tag">v3.1 | MC 1.21.11 | Fabric</div>
+            </div>
+
+            <div class="quote" id="quote"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== C# BRIDGE ====================
+        function sendToCsharp(msg) {
+            window.chrome.webview.postMessage(msg);
+        }
+
+        window.onCsharpMessage = function(msg) {
+            const parts = msg.split('|');
+            const cmd = parts[0];
+
+            if (cmd === 'autoLogin' || cmd === 'loginSuccess') {
+                showMainPage(parts[1], parts[2], parts[3]);
+            }
+            else if (cmd === 'loginError') {
+                document.getElementById('loginError').textContent = parts.slice(1).join(':');
+                document.getElementById('loginBtn').disabled = false;
+                document.getElementById('loginBtn').textContent = 'LOGIN';
+            }
+            else if (cmd === 'registerSuccess') {
+                document.getElementById('regSuccess').textContent = 'Registered! Now login.';
+                document.getElementById('regError').textContent = '';
+                document.getElementById('regBtn').disabled = false;
+                document.getElementById('regBtn').textContent = 'REGISTER';
+                setTimeout(() => switchTab('login'), 1500);
+            }
+            else if (cmd === 'registerError') {
+                document.getElementById('regError').textContent = parts.slice(1).join(':');
+                document.getElementById('regBtn').disabled = false;
+                document.getElementById('regBtn').textContent = 'REGISTER';
+            }
+            else if (cmd === 'status') {
+                updateStatus(parts[1], parseInt(parts[2]) || -1);
+            }
+            else if (cmd === 'launched') {
+                updateStatus('Launched!', -1);
+                document.getElementById('statusIcon').innerHTML = '&#10003;';
+                document.getElementById('statusIcon').className = 'status-icon ready';
+                document.getElementById('playBtn').disabled = false;
+                document.getElementById('playBtn').textContent = 'PLAY';
+                document.getElementById('progressContainer').style.display = 'none';
+            }
+            else if (cmd === 'launchError') {
+                updateStatus('Launch failed', -1);
+                document.getElementById('statusDetail').textContent = parts.slice(1).join(':');
+                document.getElementById('statusIcon').innerHTML = '&#10007;';
+                document.getElementById('statusIcon').className = 'status-icon error';
+                document.getElementById('playBtn').disabled = false;
+                document.getElementById('playBtn').textContent = 'PLAY';
+                document.getElementById('progressContainer').style.display = 'none';
+            }
+        };
+
+        // ==================== TABS ====================
+        function switchTab(tab) {
+            document.getElementById('tabLogin').className = 'login-tab' + (tab === 'login' ? ' active' : '');
+            document.getElementById('tabRegister').className = 'login-tab' + (tab === 'register' ? ' active' : '');
+            document.getElementById('loginForm').style.display = tab === 'login' ? 'block' : 'none';
+            document.getElementById('registerForm').style.display = tab === 'register' ? 'block' : 'none';
+            document.getElementById('loginError').textContent = '';
+            document.getElementById('regError').textContent = '';
+            document.getElementById('regSuccess').textContent = '';
+        }
+
+        // ==================== AUTH ====================
+        function doLogin() {
+            const user = document.getElementById('loginUser').value.trim();
+            const pass = document.getElementById('loginPass').value;
+            if (!user || !pass) {
+                document.getElementById('loginError').textContent = 'Fill in all fields';
+                return;
+            }
+            document.getElementById('loginBtn').disabled = true;
+            document.getElementById('loginBtn').innerHTML = '<span class="spinner"></span>Connecting...';
+            document.getElementById('loginError').textContent = '';
+            sendToCsharp('login|' + user + '|' + pass);
+        }
+
+        function doRegister() {
+            const user = document.getElementById('regUser').value.trim();
+            const pass = document.getElementById('regPass').value;
+            const confirm = document.getElementById('regConfirm').value;
+            if (!user || !pass) {
+                document.getElementById('regError').textContent = 'Fill in all fields';
+                return;
+            }
+            if (pass !== confirm) {
+                document.getElementById('regError').textContent = "Passwords don't match";
+                return;
+            }
+            document.getElementById('regBtn').disabled = true;
+            document.getElementById('regBtn').innerHTML = '<span class="spinner"></span>Creating...';
+            document.getElementById('regError').textContent = '';
+            sendToCsharp('register|' + user + '|' + pass + '|' + confirm);
+        }
+
+        function doLogout() {
+            sendToCsharp('logout');
+            document.getElementById('mainPage').className = 'page main-page hidden';
+            document.getElementById('loginPage').className = 'page login-page visible';
+            document.getElementById('loginUser').value = '';
+            document.getElementById('loginPass').value = '';
+        }
+
+        // ==================== MAIN PAGE ====================
+        function showMainPage(login, uid, expiresAt) {
+            document.getElementById('loginPage').className = 'page login-page hidden';
+            document.getElementById('mainPage').className = 'page main-page visible';
+
+            document.getElementById('userName').textContent = login || 'User';
+            document.getElementById('userAvatar').textContent = (login || '?')[0].toUpperCase();
+            document.getElementById('userUid').textContent = uid ? 'UID: ' + uid : 'UID: ---';
+
+            const expiryEl = document.getElementById('userExpiry');
+            if (expiresAt && expiresAt !== 'null') {
+                const exp = new Date(expiresAt);
+                const now = new Date();
+                if (exp < now) {
+                    expiryEl.textContent = 'LICENSE EXPIRED!';
+                    expiryEl.className = 'user-expiry expired';
+                    document.getElementById('playBtn').disabled = true;
+                } else {
+                    expiryEl.textContent = 'Expires: ' + exp.toLocaleDateString('ru-RU');
+                    expiryEl.className = 'user-expiry';
+                }
+            } else {
+                expiryEl.textContent = 'License: Lifetime';
+                expiryEl.className = 'user-expiry';
+            }
+
+            resetStatus();
+        }
+
+        function resetStatus() {
+            document.getElementById('statusIcon').innerHTML = '&#10003;';
+            document.getElementById('statusIcon').className = 'status-icon ready';
+            document.getElementById('statusTitle').textContent = 'Ready to play';
+            document.getElementById('statusDetail').textContent = 'Press PLAY to launch Minecraft';
+            document.getElementById('progressContainer').style.display = 'none';
+            document.getElementById('playBtn').disabled = false;
+            document.getElementById('playBtn').textContent = 'PLAY';
+        }
+
+        function updateStatus(msg, pct) {
+            document.getElementById('statusTitle').textContent = msg;
+            document.getElementById('statusIcon').innerHTML = '<span class="spinner"></span>';
+            document.getElementById('statusIcon').className = 'status-icon loading';
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('playBtn').textContent = 'PLEASE WAIT';
+
+            if (pct >= 0) {
+                document.getElementById('progressContainer').style.display = 'block';
+                document.getElementById('progressFill').style.width = pct + '%';
+                document.getElementById('progressText').textContent = pct + '%';
+                document.getElementById('statusDetail').textContent = msg;
+            }
+        }
+
+        function doPlay() {
+            document.getElementById('playBtn').disabled = true;
+            document.getElementById('playBtn').innerHTML = '<span class="spinner"></span>LAUNCHING';
+            document.getElementById('progressContainer').style.display = 'block';
+            document.getElementById('progressFill').style.width = '0%';
+            document.getElementById('progressText').textContent = 'Starting...';
+            sendToCsharp('play');
+        }
+
+        // ==================== PARTICLES ====================
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for (let i = 0; i < 20; i++) {
+                const p = document.createElement('div');
+                p.className = 'particle';
+                const size = Math.random() * 4 + 2;
+                p.style.width = size + 'px';
+                p.style.height = size + 'px';
+                p.style.left = Math.random() * 100 + '%';
+                p.style.animationDuration = (Math.random() * 15 + 10) + 's';
+                p.style.animationDelay = (Math.random() * 10) + 's';
+                container.appendChild(p);
+            }
+        }
+
+        // ==================== QUOTES ====================
+        const quotes = [
+            'Bypa$$ is in our DNA',
+            'Anti-cheat? Our toy.',
+            'Not a client — a lifestyle',
+            'Built for fighters',
+            'From cheaters, for cheaters',
+            'Rules are not for us',
+        ];
+        function showRandomQuote() {
+            document.getElementById('quote').textContent = quotes[Math.floor(Math.random() * quotes.length)];
+        }
+
+        // ==================== INIT ====================
+        createParticles();
+        showRandomQuote();
+        setInterval(showRandomQuote, 10000);
+
+        // Enter key handlers
+        document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+        document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+        document.getElementById('regConfirm').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+    </script>
+</body>
+</html>

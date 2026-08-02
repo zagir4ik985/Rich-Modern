@@ -1,0 +1,10 @@
+{
+  "Criticals": {
+    "HideStringsTypes": [
+      "ZagaLoader.MainWindow",
+      "ZagaLoader.MinecraftLauncher",
+      "ZagaLoader.Security.AntiDebug",
+      "ZagaLoader.Security.AntiTamper"
+    ]
+  }
+}

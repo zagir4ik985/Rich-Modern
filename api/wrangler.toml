@@ -1,0 +1,16 @@
+name = "zagadlc"
+main = "src/index.js"
+compatibility_date = "2024-01-01"
+
+[vars]
+RATE_LIMIT_WINDOW = 60
+RATE_LIMIT_MAX = 5
+ALLOWED_ORIGINS = "https://zagadlc.zagir4ik985.workers.dev"
+
+[[kv_namespaces]]
+binding = "USERS"
+id = "0d91dd1bcfdd43f19de9f7d5a6956fc9"
+
+[[kv_namespaces]]
+binding = "SESSIONS"
+id = "15aeb47c6f2c4e27844a83250fcc3982"

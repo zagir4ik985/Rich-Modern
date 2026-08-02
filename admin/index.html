@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>zagaDLC — Admin Panel</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="login-screen" class="screen active">
+        <div class="login-card">
+            <div class="logo">zagaDLC</div>
+            <div class="subtitle">Admin Panel</div>
+            <input type="password" id="admin-password" placeholder="Admin password" autocomplete="off">
+            <button id="login-btn" onclick="adminLogin()">Login</button>
+            <div id="login-error" class="error"></div>
+        </div>
+    </div>
+
+    <div id="dashboard-screen" class="screen">
+        <div class="header">
+            <div class="logo-sm">zagaDLC</div>
+            <div class="header-right">
+                <span id="stats-text"></span>
+                <button class="btn-logout" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <div class="stats-row">
+            <div class="stat-card">
+                <div class="stat-value" id="stat-total">0</div>
+                <div class="stat-label">Total Users</div>
+            </div>
+            <div class="stat-card green">
+                <div class="stat-value" id="stat-active">0</div>
+                <div class="stat-label">Active</div>
+            </div>
+            <div class="stat-card red">
+                <div class="stat-value" id="stat-banned">0</div>
+                <div class="stat-label">Banned</div>
+            </div>
+        </div>
+
+        <div class="panel">
+            <div class="panel-header">
+                <h2>Users</h2>
+                <div class="panel-header" style="gap: 8px;">
+                    <button class="btn-accent" onclick="migrateUids()" style="width: auto; padding: 8px 16px; font-size: 13px; background: var(--bg3); border: 1px solid var(--border); color: var(--text-dim);">Migrate UIDs</button>
+                    <button class="btn-accent" onclick="showAddUser()">+ Add User</button>
+                </div>
+            </div>
+            <table id="users-table">
+                <thead>
+                    <tr>
+                        <th>UID</th>
+                        <th>Login</th>
+                        <th>HWID</th>
+                        <th>Created</th>
+                        <th>Expires</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="users-body"></tbody>
+            </table>
+            <div id="no-users" class="empty">No users yet</div>
+        </div>
+    </div>
+
+    <div id="add-user-modal" class="modal">
+        <div class="modal-content">
+            <h3>Add User</h3>
+            <input type="text" id="new-login" placeholder="Login">
+            <input type="password" id="new-password" placeholder="Password">
+            <input type="text" id="new-expires" placeholder="Expires (YYYY-MM-DD, optional)">
+            <div class="modal-buttons">
+                <button class="btn-cancel" onclick="closeModal()">Cancel</button>
+                <button class="btn-accent" onclick="addUser()">Add</button>
+            </div>
+            <div id="add-error" class="error"></div>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>

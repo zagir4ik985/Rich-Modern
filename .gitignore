@@ -4,5 +4,11 @@ libs/
 launcher/output/
 launcher/ZagaLoader/bin/
 launcher/ZagaLoader/obj/
+launcher/ZagaUpdater/bin/
+launcher/ZagaUpdater/obj/
+loader/build/
+loader/.gradle/
+api/node_modules/
+api/.wrangler/
 .idea/
 *.class

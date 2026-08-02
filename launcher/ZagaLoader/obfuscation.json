@@ -1,0 +1,34 @@
+{
+  "Obfuscation": {
+    "Watermark": false,
+    "OutputDirectory": "bin\\Release\\net8.0-windows\\obfuscated",
+    "ReferenceBy": 0
+  },
+  "Protections": {
+    "StringsEncryption": true,
+    "BitDotNet": true,
+    "BitMethodDotnet": true,
+    "DotNetHook": true,
+    "CallToCalli": true,
+    "ObjectReturnType": true,
+    "NoNamespaces": true,
+    "FullRenamer": true,
+    "AntiDebugBreakpoints": true,
+    "AntiDecompiler": true,
+    "AntiDe4dot": true,
+    "AntiILdasm": true,
+    "BillionNops": true,
+    "BitMono": true,
+    "BitTimeDateStamp": true
+  },
+  "Criticals": {
+    "Members": [
+      "ZagaLoader.MainWindow::HandleLogin",
+      "ZagaLoader.MainWindow::HandlePlay",
+      "ZagaLoader.MinecraftLauncher::DecryptMod",
+      "ZagaLoader.MinecraftLauncher::InstallMod",
+      "ZagaLoader.Security.AntiDebug::*",
+      "ZagaLoader.Security.AntiTamper::*"
+    ]
+  }
+}
