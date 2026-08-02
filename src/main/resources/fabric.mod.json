@@ -21,6 +21,7 @@
     "mixins.json",
     "holdmyitems.mixins.json"
   ],
+  "accessWidener": "accesswidener",
   "depends": {
     "fabricloader": ">=0.18.4",
     "fabric-api": "*",
