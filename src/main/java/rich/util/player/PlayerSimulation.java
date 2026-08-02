@@ -36,7 +36,6 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.shape.VoxelShape;
 import rich.IMinecraft;
-import rich.mixin.LivingEntityNoDelayMixin;
 import rich.util.move.MoveUtil;
 
 @SuppressWarnings("deprecation")
@@ -132,7 +131,6 @@ public class PlayerSimulation implements Simulation, IMinecraft {
 
     public static PlayerSimulation fromClientPlayer(SimulatedPlayerInput input) {
         ClientPlayerEntity player = mc.player;
-        LivingEntityNoDelayMixin mixin = (LivingEntityNoDelayMixin)(Object)player;
         return new PlayerSimulation(
                 player,
                 input,
@@ -143,8 +141,8 @@ public class PlayerSimulation implements Simulation, IMinecraft {
                 player.getPitch(),
                 player.isSprinting(),
                 (float) player.fallDistance,
-                mixin.getJumpingCooldown(),
-                mixin.isJumping(),
+                player.jumpingCooldown,
+                player.jumping,
                 player.isGliding(),
                 player.isOnGround(),
                 player.horizontalCollision,
@@ -158,7 +156,6 @@ public class PlayerSimulation implements Simulation, IMinecraft {
     }
 
     public static PlayerSimulation fromOtherPlayer(PlayerEntity player, SimulatedPlayerInput input) {
-        LivingEntityNoDelayMixin mixin = (LivingEntityNoDelayMixin)(Object)player;
         return new PlayerSimulation(
                 player,
                 input,
@@ -169,8 +166,8 @@ public class PlayerSimulation implements Simulation, IMinecraft {
                 player.getPitch(),
                 player.isSprinting(),
                 (float) player.fallDistance,
-                mixin.getJumpingCooldown(),
-                mixin.isJumping(),
+                player.jumpingCooldown,
+                player.jumping,
                 player.isGliding(),
                 player.isOnGround(),
                 player.horizontalCollision,

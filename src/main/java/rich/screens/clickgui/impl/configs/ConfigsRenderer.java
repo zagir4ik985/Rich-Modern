@@ -14,10 +14,10 @@ import java.awt.*;
 
 public class ConfigsRenderer {
 
-    public static final float PANEL_X_OFFSET = 120f;
-    public static final float PANEL_Y_OFFSET = 49f;
-    public static final float PANEL_WIDTH = 387f;
-    public static final float PANEL_HEIGHT = 265f;
+    public static final float PANEL_X_OFFSET = 92f;
+    public static final float PANEL_Y_OFFSET = 38f;
+    public static final float PANEL_WIDTH = 298f;
+    public static final float PANEL_HEIGHT = 204f;
     public static final float CORNER_RADIUS = 6f;
 
     private final ConfigAnimationHandler animationHandler;

@@ -1,6 +1,7 @@
 package rich.modules.impl.combat.aura.rotations;
 
 import rich.Initialization;
+import rich.modules.impl.combat.Aura;
 import rich.modules.impl.combat.aura.Angle;
 import rich.modules.impl.combat.aura.AngleConnection;
 import rich.modules.impl.combat.aura.MathAngle;
@@ -38,9 +39,10 @@ public class SPAngle extends RotateConstructor {
     @Override
     public Angle limitAngleChange(Angle currentAngle, Angle targetAngle, Vec3d vec3d, Entity entity) {
         StrikeManager attackHandler = Initialization.getInstance().getManager().getAttackPerpetrator().getAttackHandler();
+        Aura aura = Aura.getInstance();
         StopWatch attackTimer = attackHandler.getAttackTimer();
         int count = attackHandler.getCount();
-        boolean canAttack = entity != null && attackHandler.canAttack(null, 0);
+        boolean canAttack = entity != null && attackHandler.canAttack(aura.getConfig(), 0);
 
         if (entity != null && canAttack) {
             Vec3d aimPoint = Vector.hitbox(entity, 1, entity.isOnGround() ? 1F : 1.256F, 1, 2);
@@ -122,7 +124,7 @@ public class SPAngle extends RotateConstructor {
         float totalJitterYaw = currentJitterYaw + circleYaw;
         float totalJitterPitch = currentJitterPitch + circlePitch;
 
-        if (!false || entity == null) {
+        if (!aura.isState() || entity == null) {
             if (attackTimer.finished(800)) {
                 totalJitterYaw *= 0.3f;
                 totalJitterPitch *= 0.3f;

@@ -4,6 +4,7 @@ import antidaunleak.api.annotation.Native;
 import net.minecraft.client.MinecraftClient;
 import rich.events.api.EventHandler;
 import rich.events.impl.TickEvent;
+import rich.modules.impl.combat.Aura;
 import rich.modules.impl.combat.aura.Angle;
 import rich.modules.impl.combat.aura.AngleConfig;
 import rich.modules.impl.combat.aura.AngleConnection;
@@ -74,7 +75,9 @@ public class Strafe extends ModuleStructure {
             yaw = MoveUtil.moveYaw(mc.player.getYaw());
             rot.setYaw(yaw);
             rot.setPitch(mc.player.getPitch());
-            AngleConnection.INSTANCE.rotateTo(rot, AngleConfig.DEFAULT, TaskPriority.HIGH_IMPORTANCE_1, this);
+            if (Aura.getInstance().target == null) {
+                AngleConnection.INSTANCE.rotateTo(rot, AngleConfig.DEFAULT, TaskPriority.HIGH_IMPORTANCE_1, this);
+            }
         }
     }
 

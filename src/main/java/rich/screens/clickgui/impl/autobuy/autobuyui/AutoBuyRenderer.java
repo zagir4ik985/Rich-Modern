@@ -69,10 +69,10 @@ public class AutoBuyRenderer implements IMinecraft {
 
         if (categoryAlpha <= 0.01f && !pendingSlideOut) return;
 
-        float panelX = bgX + 120f;
-        float panelY = bgY + 49f;
-        float panelW = BackgroundComponent.BG_WIDTH - 128f;
-        float panelH = BackgroundComponent.BG_HEIGHT - 60f;
+        float panelX = bgX + 92f;
+        float panelY = bgY + 38f;
+        float panelW = BackgroundComponent.BG_WIDTH - 100f;
+        float panelH = BackgroundComponent.BG_HEIGHT - 46f;
 
         autoBuyComponent.position(panelX, panelY);
         autoBuyComponent.size(panelW, panelH);
@@ -109,10 +109,10 @@ public class AutoBuyRenderer implements IMinecraft {
         if (categoryAlpha < 0.5f) return false;
         if (autoBuyComponent.isSlidingOut()) return false;
 
-        float panelX = bgX + 120f;
-        float panelY = bgY + 49f;
-        float panelW = BackgroundComponent.BG_WIDTH - 128f;
-        float panelH = BackgroundComponent.BG_HEIGHT - 60f;
+        float panelX = bgX + 92f;
+        float panelY = bgY + 38f;
+        float panelW = BackgroundComponent.BG_WIDTH - 100f;
+        float panelH = BackgroundComponent.BG_HEIGHT - 46f;
 
         return autoBuyComponent.mouseClicked(mouseX, mouseY, button, panelX, panelY, panelW, panelH);
     }
@@ -126,10 +126,10 @@ public class AutoBuyRenderer implements IMinecraft {
         if (categoryAlpha < 0.5f) return false;
         if (autoBuyComponent.isSlidingOut()) return false;
 
-        float panelX = bgX + 120f;
-        float panelY = bgY + 49f;
-        float panelW = BackgroundComponent.BG_WIDTH - 128f;
-        float panelH = BackgroundComponent.BG_HEIGHT - 60f;
+        float panelX = bgX + 92f;
+        float panelY = bgY + 38f;
+        float panelW = BackgroundComponent.BG_WIDTH - 100f;
+        float panelH = BackgroundComponent.BG_HEIGHT - 46f;
 
         return autoBuyComponent.mouseScrolled(mouseX, mouseY, amount, panelX, panelY, panelW, panelH);
     }

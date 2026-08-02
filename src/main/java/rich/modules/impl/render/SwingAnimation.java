@@ -11,6 +11,7 @@ import net.minecraft.util.math.RotationAxis;
 import rich.events.api.EventHandler;
 import rich.events.impl.HandAnimationEvent;
 import rich.events.impl.SwingDurationEvent;
+import rich.modules.impl.combat.Aura;
 import rich.modules.module.ModuleStructure;
 import rich.modules.module.category.ModuleCategory;
 import rich.modules.module.setting.implement.BooleanSetting;
@@ -39,7 +40,7 @@ public class SwingAnimation extends ModuleStructure {
 
     @EventHandler
     public void onSwingDuration(SwingDurationEvent e) {
-        if (onlyAura.isValue() ? state : true) {
+        if (onlyAura.isValue() ? Aura.getInstance().isState() && Aura.getInstance().target != null : true) {
             e.setAnimation(swingSpeedSetting.getValue());
             e.cancel();
         }
@@ -64,7 +65,7 @@ public class SwingAnimation extends ModuleStructure {
             float sinSmooth = (float) (Math.sin(swingProgress * Math.PI) * 0.5F);
             float strength = hitStrengthSetting.getValue();
 
-            if (onlyAura.isValue() ? state : true) {
+            if (onlyAura.isValue() ? Aura.getInstance().isState() && Aura.getInstance().target != null : true) {
                 if (onlySwing.isValue() ? mc.player.handSwingTicks != 0 : true) {
                     switch (swingType.getSelected()) {
                         case "Chop" -> {

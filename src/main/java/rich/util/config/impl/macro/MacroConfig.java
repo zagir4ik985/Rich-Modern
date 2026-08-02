@@ -23,7 +23,7 @@ public class MacroConfig {
     private final Path configPath;
 
     private MacroConfig() {
-        Path configDir = Paths.get("zagaDLC", "configs");
+        Path configDir = Paths.get("Rich", "configs");
         try {
             Files.createDirectories(configDir);
         } catch (IOException ignored) {}

@@ -1,6 +1,7 @@
 package rich.modules.impl.combat.aura.rotations;
 
 import rich.Initialization;
+import rich.modules.impl.combat.Aura;
 import rich.modules.impl.combat.aura.Angle;
 import rich.modules.impl.combat.aura.AngleConnection;
 import rich.modules.impl.combat.aura.MathAngle;
@@ -29,11 +30,12 @@ public class SnapAngle extends RotateConstructor {
     @Override
     public Angle limitAngleChange(Angle currentAngle, Angle targetAngle, Vec3d vec3d, Entity entity) {
         StrikeManager attackHandler = Initialization.getInstance().getManager().getAttackPerpetrator().getAttackHandler();
+        Aura aura = Aura.getInstance();
 
         Angle angleDelta = MathAngle.calculateDelta(currentAngle, targetAngle);
         float yawDelta = angleDelta.getYaw(), pitchDelta = angleDelta.getPitch();
         float rotationDifference = (float) Math.hypot(Math.abs(yawDelta), Math.abs(pitchDelta));
-        boolean canAttack = entity != null && attackHandler.canAttack(null, 0);
+        boolean canAttack = entity != null && attackHandler.canAttack(aura.getConfig(), 0);
 
         float preAttackSpeed = 1F;
         float postAttackSpeed = 1F;

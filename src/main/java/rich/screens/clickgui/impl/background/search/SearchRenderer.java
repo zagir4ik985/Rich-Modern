@@ -22,10 +22,10 @@ public class SearchRenderer {
 
         if (searchHandler.getSearchPanelAlpha() <= 0.01f) return;
 
-        float panelX = bgX + 120f;
-        float panelY = bgY + 49f;
-        float panelW = bgWidth - 128f;
-        float panelH = bgHeight - 60f;
+        float panelX = bgX + 92f;
+        float panelY = bgY + 38f;
+        float panelW = bgWidth - 100f;
+        float panelH = bgHeight - 46f;
 
         float resultAlpha = searchHandler.getSearchPanelAlpha() * alphaMultiplier;
 
@@ -169,10 +169,10 @@ public class SearchRenderer {
 
         if (!handler.isSearchActive() || handler.getSearchResults().isEmpty()) return null;
 
-        float panelX = bgX + 120f;
-        float panelY = bgY + 49f;
-        float panelW = bgWidth - 128f;
-        float panelH = bgHeight - 60f;
+        float panelX = bgX + 92f;
+        float panelY = bgY + 38f;
+        float panelW = bgWidth - 100f;
+        float panelH = bgHeight - 46f;
 
         if (mouseX < panelX + 5 || mouseX > panelX + panelW - 5 ||
                 mouseY < panelY || mouseY > panelY + panelH) return null;

@@ -18,6 +18,16 @@ accessible method net/minecraft/client/render/RenderLayer of (Ljava/lang/String;
 accessible method net/minecraft/network/packet/c2s/play/ChatMessageC2SPacket <init> (Ljava/lang/String;Ljava/time/Instant;JLnet/minecraft/network/message/MessageSignatureData;Lnet/minecraft/network/message/LastSeenMessageList$Acknowledgment;)V
 accessible method net/minecraft/network/packet/c2s/play/ChatMessageC2SPacket <init> (Lnet/minecraft/network/PacketByteBuf;)V
 
+accessible class net/minecraft/client/gui/render/GuiRenderer$Draw
+accessible method net/minecraft/client/render/GameRenderer getFov (Lnet/minecraft/client/render/Camera;FZ)F
+
+mutable field net/minecraft/util/math/Vec3d x D
+mutable field net/minecraft/util/math/Vec3d y D
+mutable field net/minecraft/util/math/Vec3d z D
+
+accessible method net/minecraft/entity/Entity movementInputToVelocity (Lnet/minecraft/util/math/Vec3d;FF)Lnet/minecraft/util/math/Vec3d;
+accessible class net/minecraft/client/gui/hud/InGameHud$BarType
+accessible field net/minecraft/client/render/entity/LivingEntityRenderer features Ljava/util/List;
 accessible method net/minecraft/client/network/ClientPlayerEntity sendSprintingPacket ()V
 accessible field net/minecraft/entity/Entity dimensions Lnet/minecraft/entity/EntityDimensions;
 accessible field net/minecraft/entity/LivingEntity jumpingCooldown I
@@ -27,6 +37,7 @@ accessible field net/minecraft/entity/Entity submergedFluidTag Ljava/util/Set;
 accessible method net/minecraft/client/input/KeyboardInput getMovementMultiplier (ZZ)F
 accessible field net/minecraft/client/MinecraftClient itemUseCooldown I
 accessible field net/minecraft/client/network/ClientPlayerInteractionManager blockBreakingCooldown I
+accessible field net/minecraft/client/gui/hud/BossBarHud bossBars Ljava/util/Map;
 accessible method net/minecraft/client/network/ClientPlayerInteractionManager sendSequencedPacket (Lnet/minecraft/client/world/ClientWorld;Lnet/minecraft/client/network/SequencedPacketCreator;)V
 accessible class net/minecraft/entity/player/ItemCooldownManager$Entry
 accessible field net/minecraft/entity/player/ItemCooldownManager$Entry endTick I

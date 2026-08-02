@@ -2,31 +2,49 @@ package rich.modules.impl.render;
 
 import lombok.AccessLevel;
 import lombok.experimental.FieldDefaults;
-import rich.client.draggables.HudManager;
 import rich.modules.module.category.ModuleCategory;
 import rich.modules.module.ModuleStructure;
+import rich.modules.module.setting.implement.*;
 import rich.util.Instance;
-import rich.Initialization;
-import rich.modules.module.setting.implement.MultiSelectSetting;
-import rich.modules.module.setting.implement.BooleanSetting;
 
 @FieldDefaults(level = AccessLevel.PRIVATE, makeFinal = true)
 public class Hud extends ModuleStructure {
-
     public static Hud getInstance() {
         return Instance.get(Hud.class);
     }
 
-    public MultiSelectSetting interfaceSettings = new MultiSelectSetting("Elements", "Watermark")
-        .value("Watermark", "HotBar", "Information", "TargetHud", "Keybinds", "Staff", "Potions", "Notifications", "Cooldowns", "Inventory")
-        .selected("Watermark", "Information", "Keybinds", "Potions", "Notifications", "Cooldowns", "Inventory");
+    public MultiSelectSetting interfaceSettings = new MultiSelectSetting("Элементы", "Настройка элементов интерфейса")
+            .value("Watermark",
+                    "HotKeys",
+                    "Potions",
+                    "Staff",
+                    "test",
+                    "TargetHud",
+//                    "CoolDowns",
+//                    "Inventory",
+                    "Info",
+                    "Notifications")
 
-    public BooleanSetting showBps = new BooleanSetting("Show BPS", "Show BPS counter").setValue(true);
-    public BooleanSetting showTps = new BooleanSetting("Show TPS", "Show TPS counter").setValue(true);
+            .selected("Watermark",
+                    "HotKeys",
+                    "Potions",
+                    "Staff",
+                    "TargetHud",
+//                    "CoolDowns",
+//                    "Inventory",
+                    "Info",
+                    "Notifications");
+
+    public BooleanSetting showBps = new BooleanSetting("Show BPS", "Показывать блоки в секунду")
+            .setValue(true)
+            .visible(() -> interfaceSettings.isSelected("Info"));
+
+    public BooleanSetting showTps = new BooleanSetting("Show TPS", "Показывать TPS в Watermark")
+            .setValue(true)
+            .visible(() -> interfaceSettings.isSelected("Watermark"));
 
     public Hud() {
         super("Hud", ModuleCategory.RENDER);
         settings(interfaceSettings, showBps, showTps);
-        Initialization.getInstance().getManager().getHudManager().initElements();
     }
 }

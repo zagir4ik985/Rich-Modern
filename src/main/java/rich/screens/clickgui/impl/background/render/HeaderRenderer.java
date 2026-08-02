@@ -25,12 +25,12 @@ public class HeaderRenderer {
         int panelAlpha = (int) (25 * alphaMultiplier);
         int outlineAlpha = (int) (255 * alphaMultiplier);
 
-        Render2D.rect(bgX + 120f, bgY + 7.5f, bgWidth - 128f, 25, new Color(128, 128, 128, panelAlpha).getRGB(), 8);
-        Render2D.outline(bgX + 120f, bgY + 7.5f, bgWidth - 128f, 25, 0.5f, new Color(55, 55, 55, outlineAlpha).getRGB(), 8);
+        Render2D.rect(bgX + 92f, bgY + 7.5f, bgWidth - 100f, 25, new Color(128, 128, 128, panelAlpha).getRGB(), 8);
+        Render2D.outline(bgX + 92f, bgY + 7.5f, bgWidth - 100f, 25, 0.5f, new Color(55, 55, 55, outlineAlpha).getRGB(), 8);
     }
 
     private void renderSearchBox(float bgX, float bgY, SearchHandler searchHandler, float alphaMultiplier) {
-        float searchBoxX = bgX + 410f;
+        float searchBoxX = bgX + 315f;
         float searchBoxY = bgY + 12.5f;
         float searchBoxW = 70f;
         float searchBoxH = 15f;
@@ -121,7 +121,7 @@ public class HeaderRenderer {
     private void renderCategoryLabel(float bgX, float bgY, ModuleCategory previousCategory,
                                      ModuleCategory currentCategory, float headerTransition,
                                      SearchHandler searchHandler, float alphaMultiplier) {
-        float baseX = bgX + 130f;
+        float baseX = bgX + 100f;
         float baseY = bgY + 16f;
 
         float categoryAlpha = searchHandler.getNormalPanelAlpha() * alphaMultiplier;
@@ -170,7 +170,7 @@ public class HeaderRenderer {
     }
 
     public boolean isSearchBoxHovered(double mouseX, double mouseY, float bgX, float bgY) {
-        float searchBoxX = bgX + 410f;
+        float searchBoxX = bgX + 315f;
         float searchBoxY = bgY + 12.5f;
         float searchBoxW = 70f;
         float searchBoxH = 15f;

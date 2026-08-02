@@ -21,14 +21,14 @@ import rich.util.ColorUtil;
 import rich.util.render.сliemtpipeline.ClientPipelines;
 import rich.util.timer.StopWatch;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class JumpCircle extends ModuleStructure implements IMinecraft {
 
-    private final List<Circle> circles = new CopyOnWriteArrayList<>();
+    private final List<Circle> circles = new ArrayList<>();
 
     final Identifier circleTexture = Identifier.of("rich", "images/circle/circle.png");
     final Identifier glowTexture = Identifier.of("rich", "images/particle/glow.png");

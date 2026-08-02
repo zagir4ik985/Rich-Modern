@@ -20,17 +20,16 @@ public class HudManager {
     public void initElements() {
         if (initialized) return;
 
-        register(new WatermarkComponent());
-        register(new HotbarComponent());
-        register(new InformationComponent());
-        register(new TargetHudComponent());
-        register(new KeybindsComponent());
-        register(new StaffComponent());
-        register(new PotionsComponent());
-        register(new NotifyComponent());
-        register(new CooldownsComponent());
-        register(new InventoryComponent());
-        register(new MediaPlayerComponent());
+        register(new Watermark());
+        register(new HotKeys());
+        register(new Notifications());
+        register(new test());
+        register(new Potions());
+        register(new CoolDowns());
+        register(new TargetHud());
+        register(new Info());
+        register(new Staff());
+        register(new Inventory());
 
         initialized = true;
 

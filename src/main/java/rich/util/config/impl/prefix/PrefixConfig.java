@@ -23,7 +23,7 @@ public class PrefixConfig {
     private String prefix = ".";
 
     private PrefixConfig() {
-        Path configDir = Paths.get("zagaDLC", "configs");
+        Path configDir = Paths.get("Rich", "configs");
         try {
             Files.createDirectories(configDir);
         } catch (IOException ignored) {}

@@ -31,18 +31,19 @@ public class Projection implements IMinecraft {
         int displayHeight = mc.getWindow().getHeight();
         int[] viewport = new int[4];
         GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
+        Vector3f target = new Vector3f();
 
         double deltaX = pos.x - camera.getCameraPos().x;
         double deltaY = pos.y - camera.getCameraPos().y;
         double deltaZ = pos.z - camera.getCameraPos().z;
 
-        Vector4f transformed = new Vector4f((float) deltaX, (float) deltaY, (float) deltaZ, 1.0F);
-        transformed.mul(Render3D.lastWorldSpaceMatrix);
+        Vector4f transformedCoordinates = new Vector4f((float) deltaX, (float) deltaY, (float) deltaZ, 1.0F);
+        transformedCoordinates.mul(Render3D.lastWorldSpaceMatrix);
 
-        Matrix4f mvp = new Matrix4f(Render3D.lastProjMat).mul(Render3D.lastModMat);
+        Matrix4f matrixProj = new Matrix4f(Render3D.lastProjMat);
+        Matrix4f matrixModel = new Matrix4f(Render3D.lastModMat);
 
-        Vector3f target = new Vector3f();
-        mvp.project(transformed.x(), transformed.y(), transformed.z(), viewport, target);
+        matrixProj.mul(matrixModel).project(transformedCoordinates.x(), transformedCoordinates.y(), transformedCoordinates.z(), viewport, target);
 
         return new Vec3d(
                 target.x / mc.getWindow().getScaleFactor(),

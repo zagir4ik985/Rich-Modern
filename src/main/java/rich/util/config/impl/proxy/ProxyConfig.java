@@ -30,7 +30,7 @@ public class ProxyConfig {
     private Proxy lastUsedProxy = new Proxy();
 
     private ProxyConfig() {
-        Path configDir = Paths.get("zagaDLC", "configs", "proxy");
+        Path configDir = Paths.get("Rich", "configs", "proxy");
         try {
             Files.createDirectories(configDir);
         } catch (IOException ignored) {}

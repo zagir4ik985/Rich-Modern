@@ -29,7 +29,6 @@ import rich.modules.impl.render.Hud;
 import rich.screens.clickgui.ClickGui;
 import rich.screens.menu.MainMenuScreen;
 import rich.util.config.ConfigSystem;
-import rich.util.game.EntityCache;
 import rich.util.render.font.FontRenderer;
 import rich.util.session.SessionChanger;
 import rich.util.window.WindowStyle;
@@ -111,8 +110,6 @@ public abstract class MinecraftClientMixin {
         MinecraftClient mc = MinecraftClient.getInstance();
         if (mc.player == null || mc.world == null) return;
 
-        EntityCache.getInstance().update();
-
         Hud hud = Hud.getInstance();
         if (hud != null && hud.isState()) {
             if (Initialization.getInstance() != null
@@ -151,7 +148,7 @@ public abstract class MinecraftClientMixin {
         UserProfile userProfile = UserProfile.getInstance();
         String username = userProfile.profile("username");
         String role = userProfile.profile("role");
-        cir.setReturnValue(String.format("zagaDLC (%s - %s)", role, username));
+        cir.setReturnValue(String.format("Rich Modern (%s - %s)", role, username));
     }
 
     @Inject(method = "handleInputEvents", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;getInventory()Lnet/minecraft/entity/player/PlayerInventory;"), cancellable = true)
@@ -159,6 +156,23 @@ public abstract class MinecraftClientMixin {
         HotBarUpdateEvent event = new HotBarUpdateEvent();
         EventManager.callEvent(event);
         if (event.isCancelled()) ci.cancel();
+    }
+
+    @Inject(method = "doItemUse", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Hand;values()[Lnet/minecraft/util/Hand;"), cancellable = true)
+    public void doItemUseHook(CallbackInfo ci) {
+        if (NoInteract.getInstance().isState()) {
+            for (Hand hand : Hand.values()) {
+                if (player.getStackInHand(hand).isEmpty()) continue;
+                ActionResult result = interactionManager.interactItem(player, hand);
+                if (result.isAccepted()) {
+                    if (result instanceof ActionResult.Success success && success.swingSource().equals(ActionResult.SwingSource.CLIENT)) {
+                        gameRenderer.firstPersonRenderer.resetEquipProgress(hand);
+                        player.swingHand(hand);
+                    }
+                    ci.cancel();
+                }
+            }
+        }
     }
 
     @Inject(method = "onResolutionChanged", at = @At("TAIL"))

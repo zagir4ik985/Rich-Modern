@@ -23,7 +23,7 @@ public class BlockESPConfig {
     private final Set<String> blocks = new CopyOnWriteArraySet<>();
 
     private BlockESPConfig() {
-        Path configDir = Paths.get("zagaDLC", "configs");
+        Path configDir = Paths.get("Rich", "configs");
         try {
             Files.createDirectories(configDir);
         } catch (IOException ignored) {}

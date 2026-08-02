@@ -55,48 +55,8 @@
     ]
   },
   "welcome": {
-    "sounds": [
-      "rich:welcome"
-    ]
-  },
-  "double_kill": {
-    "sounds": [
-      "rich:double_kill"
-    ]
-  },
-  "firstblood": {
-    "sounds": [
-      "rich:firstblood"
-    ]
-  },
-  "killing_spree": {
-    "sounds": [
-      "rich:killing_spree"
-    ]
-  },
-  "mega_kill": {
-    "sounds": [
-      "rich:mega_kill"
-    ]
-  },
-  "monster_kill": {
-    "sounds": [
-      "rich:monster_kill"
-    ]
-  },
-  "rampage": {
-    "sounds": [
-      "rich:rampage"
-    ]
-  },
-  "triple_kill": {
-    "sounds": [
-      "rich:triple_kill"
-    ]
-  },
-  "ultra_kill": {
-    "sounds": [
-      "rich:ultra_kill"
-    ]
-  }
+  "sounds": [
+    "rich:welcome"
+  ]
+}
 }

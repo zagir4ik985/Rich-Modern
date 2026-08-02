@@ -10,7 +10,7 @@ import java.nio.file.Paths;
 
 public class ConfigPath {
 
-    private static final String ROOT_DIR = "zagaDLC";
+    private static final String ROOT_DIR = "Rich";
     private static final String CONFIG_DIR = "configs";
     private static final String AUTO_DIR = "autocfg";
     private static final String CONFIG_FILE = "autoconfig.json";

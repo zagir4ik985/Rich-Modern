@@ -21,7 +21,7 @@ public class Drag {
     private static final float OUTLINE_THICKNESS = 1.0f;
     private static final int OUTLINE_COLOR = ColorUtil.rgba(255, 255, 255, 255);
 
-    private static final Set<String> EXCLUDED_ELEMENTS = Set.of("Notifications", "Watermark", "Information");
+    private static final Set<String> EXCLUDED_ELEMENTS = Set.of("Notifications", "Watermark", "Info");
 
     private static HudElement draggingElement;
     private static int startX, startY;
@@ -35,10 +35,6 @@ public class Drag {
         Hud hud = Hud.getInstance();
         if (hud == null || !hud.isState()) return;
 
-        float scaleMul = Render2D.getScaleMultiplier();
-        int scaledMouseX = (int) (mouseX * scaleMul);
-        int scaledMouseY = (int) (mouseY * scaleMul);
-
         if (!isChatScreen) {
             if (draggingElement != null) {
                 DragConfig.getInstance().save();
@@ -49,11 +45,11 @@ public class Drag {
         }
 
         if (isChatScreen && draggingElement != null) {
-            draggingElement.setX(scaledMouseX - startX);
-            draggingElement.setY(scaledMouseY - startY);
+            draggingElement.setX(mouseX - startX);
+            draggingElement.setY(mouseY - startY);
         }
 
-        hudManager.render(context, delta, scaledMouseX, scaledMouseY);
+        hudManager.render(context, delta, mouseX, mouseY);
 
         if (isChatScreen) {
             for (HudElement element : hudManager.getEnabledElements()) {
@@ -67,7 +63,7 @@ public class Drag {
                     continue;
                 }
 
-                boolean isHovered = isHovered(element, scaledMouseX, scaledMouseY);
+                boolean isHovered = isHovered(element, mouseX, mouseY);
                 boolean previouslyHovered = wasHovered.getOrDefault(element, false);
 
                 float rounding = element.getRoundingRadius();
@@ -113,9 +109,8 @@ public class Drag {
             HudManager hudManager = getHudManager();
             if (hudManager == null) return;
 
-            float scaleMul = Render2D.getScaleMultiplier();
-            double mouseX = click.x() * scaleMul;
-            double mouseY = click.y() * scaleMul;
+            double mouseX = click.x();
+            double mouseY = click.y();
 
             HudElement element = hudManager.getElementAt(mouseX, mouseY);
             if (element != null) {

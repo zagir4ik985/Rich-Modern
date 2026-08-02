@@ -9,6 +9,7 @@ import net.minecraft.util.math.Vec3d;
 import rich.events.api.EventHandler;
 import rich.events.impl.PacketEvent;
 import rich.events.impl.TickEvent;
+import rich.modules.impl.combat.Aura;
 import rich.modules.module.ModuleStructure;
 import rich.modules.module.category.ModuleCategory;
 import rich.util.Instance;
@@ -41,10 +42,30 @@ public class ElytraMotion extends ModuleStructure {
     @Native(type = Native.Type.VMProtectBeginUltra)
     public void onTick(TickEvent e) {
         if (!state || mc.player == null || mc.world == null || !mc.player.isGliding()) return;
+
+        Aura aura = Instance.get(Aura.class);
+
+        if (aura.isState()) {
+            handleAuraMotion(aura);
+        }
+    }
+
+    @Native(type = Native.Type.VMProtectBeginUltra)
+    private void handleAuraMotion(Aura aura) {
+        if (aura.isState() && aura.target != null && mc.player.distanceTo(aura.target) < aura.getAttackrange().getValue() - 1F) {
+            mc.player.setVelocity(0, 0.02, 0);
+        }
     }
 
     @EventHandler
     public void onPacket(PacketEvent e) {
+        Aura aura = Instance.get(Aura.class);
+        if (aura.isState() && aura.target != null && mc.player.distanceTo(aura.target) < aura.getAttackrange().getValue() - 1F) {
+            switch (e.getPacket()) {
+                default -> {
+                }
+            }
+        }
     }
 
     @Override

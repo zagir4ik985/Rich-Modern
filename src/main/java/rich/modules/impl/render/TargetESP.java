@@ -15,6 +15,7 @@ import org.joml.Vector3f;
 import rich.IMinecraft;
 import rich.events.api.EventHandler;
 import rich.events.impl.WorldRenderEvent;
+import rich.modules.impl.combat.Aura;
 import rich.modules.module.ModuleStructure;
 import rich.modules.module.category.ModuleCategory;
 import rich.modules.module.setting.implement.ColorSetting;
@@ -98,7 +99,11 @@ public class TargetESP extends ModuleStructure implements IMinecraft {
     public void onRender3D(WorldRenderEvent e) {
         float deltaTime = getDeltaTime();
 
-        LivingEntity target = findNearestTarget();
+        LivingEntity target = null;
+
+        if (Aura.getInstance() != null && Aura.getInstance().isState()) {
+            target = Aura.target;
+        }
 
         if (target == null) {
             smoothedPos = null;
@@ -605,21 +610,5 @@ public class TargetESP extends ModuleStructure implements IMinecraft {
     @FunctionalInterface
     private interface Transformation {
         Vec3d make(double sin, double cos);
-    }
-
-    private LivingEntity findNearestTarget() {
-        if (mc.player == null || mc.world == null) return null;
-        LivingEntity closest = null;
-        double closestDist = 6.0;
-        for (var entity : mc.world.getEntities()) {
-            if (entity instanceof LivingEntity living && living != mc.player && living.isAlive()) {
-                double dist = mc.player.distanceTo(living);
-                if (dist < closestDist) {
-                    closestDist = dist;
-                    closest = living;
-                }
-            }
-        }
-        return closest;
     }
 }

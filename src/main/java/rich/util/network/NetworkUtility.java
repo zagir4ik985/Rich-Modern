@@ -11,6 +11,7 @@ import net.minecraft.util.Hand;
 import net.minecraft.util.PlayerInput;
 import net.minecraft.util.hit.BlockHitResult;
 import rich.IMinecraft;
+import rich.mixin.ClientConnectionAccessor;
 import rich.mixin.IClientWorld;
 import rich.modules.impl.combat.aura.Angle;
 import rich.util.timer.TimerUtil;
@@ -115,6 +116,15 @@ public class NetworkUtility implements IMinecraft {
     public void handleSPacket(Packet<?> packet) {
         if (packet instanceof WorldTimeUpdateS2CPacket e) {
             lastReceive = System.currentTimeMillis();
+        }
+    }
+
+    public void handlePacket(Packet<?> packet) {
+        if (!(mc.getNetworkHandler() instanceof ClientPlayNetworkHandler net)) return;
+        if (mc.isOnThread()) {
+            ClientConnectionAccessor.handlePacket(packet, net);
+        } else {
+            mc.execute(() -> ClientConnectionAccessor.handlePacket(packet, net));
         }
     }
 

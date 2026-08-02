@@ -36,7 +36,7 @@ public class ConfigSerializer {
         root.add("autobuy", serializeAutoBuy());
         root.addProperty("version", "2.0");
         root.addProperty("timestamp", System.currentTimeMillis());
-        root.addProperty("client", "zagaDLC");
+        root.addProperty("client", "Rich Modern");
 
         return GSON.toJson(root);
     }

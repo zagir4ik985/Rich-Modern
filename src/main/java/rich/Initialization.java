@@ -15,8 +15,6 @@ public class Initialization implements ClientModInitializer {
     @Getter
     private Manager manager;
 
-    public static float TIMER = 1.0f;
-
     @Override
     public void onInitializeClient() {
 

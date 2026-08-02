@@ -8,6 +8,7 @@ import net.minecraft.util.math.Vec3d;
 import rich.events.api.EventHandler;
 import rich.events.impl.InputEvent;
 import rich.events.impl.TickEvent;
+import rich.modules.impl.combat.Aura;
 import rich.modules.impl.combat.AutoTotem;
 import rich.modules.impl.combat.aura.AngleConnection;
 import rich.modules.module.ModuleStructure;
@@ -74,7 +75,7 @@ public class TargetStrafe extends ModuleStructure {
 
         if (isAutoTotemBlocking()) return;
 
-        LivingEntity target = findNearestTarget();
+        LivingEntity target = Aura.target;
         if (target == null || !target.isAlive()) return;
 
         if (!mode.isSelected("Grim")) return;
@@ -198,7 +199,7 @@ public class TargetStrafe extends ModuleStructure {
 
         if (isAutoTotemBlocking()) return;
 
-        LivingEntity target = findNearestTarget();
+        LivingEntity target = Aura.target;
         if (target == null || !target.isAlive()) return;
 
         if (!mode.isSelected("Matrix")) return;
@@ -311,21 +312,5 @@ public class TargetStrafe extends ModuleStructure {
     public void activate() {
         super.activate();
         grimPointIndex = 0;
-    }
-
-    private LivingEntity findNearestTarget() {
-        if (mc.player == null || mc.world == null) return null;
-        LivingEntity closest = null;
-        double closestDist = 6.0;
-        for (var entity : mc.world.getEntities()) {
-            if (entity instanceof LivingEntity living && living != mc.player && living.isAlive()) {
-                double dist = mc.player.distanceTo(living);
-                if (dist < closestDist) {
-                    closestDist = dist;
-                    closest = living;
-                }
-            }
-        }
-        return closest;
     }
 }
