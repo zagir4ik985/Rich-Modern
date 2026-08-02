@@ -1,7 +1,0 @@
-{
-	"credit": "cyberia was here",
-	"parent": "minecraft:item/generated",
-	"textures": {
-		"layer0": "item/wildflowers"
-	}
-}

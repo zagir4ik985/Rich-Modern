@@ -108,7 +108,6 @@ public class ModuleRepository {
                 .add(new ElytraSpeed())
                 .add(new ItemCooldowns())
                 .add(new UseTracker())
-                .add(new HoldMyItems())
                 .hidden(new AutoParser());
     }
 

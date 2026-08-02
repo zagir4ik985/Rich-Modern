@@ -1,10 +1,12 @@
 {
   "schemaVersion": 1,
   "id": "copyright",
-  "version": "${version}",
+  "version": "1.0.01",
   "name": "zagaDLC",
   "description": "Custom Minecraft client with shader-based rendering",
-  "authors": ["defzaga"],
+  "authors": [
+    "defzaga"
+  ],
   "contact": {},
   "license": "MIT",
   "icon": "assets/rich/textures/capes/cape.png",
@@ -22,9 +24,20 @@
   ],
   "accessWidener": "accesswidener",
   "depends": {
-    "fabricloader": ">=0.18.4",
+    "fabricloader": "\u003e\u003d0.18.4",
     "fabric-api": "*",
     "minecraft": "~1.21.11",
-    "java": ">=21"
-  }
+    "java": "\u003e\u003d21"
+  },
+  "jars": [
+    {
+      "file": "META-INF/jars/luaj-jse-3.0.1.jar"
+    },
+    {
+      "file": "META-INF/jars/netty-codec-socks-4.1.82.Final.jar"
+    },
+    {
+      "file": "META-INF/jars/netty-handler-proxy-4.1.82.Final.jar"
+    }
+  ]
 }
