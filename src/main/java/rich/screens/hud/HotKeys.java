@@ -1,229 +1,227 @@
 package rich.screens.hud;
 
-import net.minecraft.client.gui.DrawContext;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.client.gui.screen.ChatScreen;
 import rich.Initialization;
-import rich.client.draggables.AbstractHudElement;
 import rich.modules.module.ModuleStructure;
-import rich.util.animations.Direction;
-import rich.util.render.Render2D;
-import rich.util.render.shader.Scissor;
+import rich.modules.module.setting.Setting;
+import rich.modules.module.setting.implement.BooleanSetting;
+import rich.screens.hud.port.Animation;
+import rich.screens.hud.port.BorderRadius;
+import rich.screens.hud.port.ColorRGBA;
+import rich.screens.hud.port.CustomDrawContext;
+import rich.screens.hud.port.DrawUtil;
+import rich.screens.hud.port.Easing;
+import rich.screens.hud.port.Keyboard;
+import rich.screens.hud.port.PortHudElement;
+import rich.screens.hud.port.Theme;
+import rich.util.modules.ModuleProvider;
 import rich.util.render.font.Fonts;
-import rich.util.string.KeyHelper;
 
-import java.awt.*;
-import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Random;
 
-public class HotKeys extends AbstractHudElement {
+public class HotKeys extends PortHudElement {
 
-    private List<ModuleStructure> keysList = new ArrayList<>();
-    private long lastKeyChange = 0;
-    private String currentRandomKey = "NONE";
+    private final Animation widthAnimation;
+    private final Animation xLine;
+    private final Animation alpha;
 
-    private float animatedWidth = 80;
-    private float animatedHeight = 23;
-    private long lastUpdateTime = System.currentTimeMillis();
-
-    private static final float ANIMATION_SPEED = 8.0f;
+    private static final float BLUR_STRENGTH = 15.0f;
+    private static final float CORNER_RADIUS = 2.25f;
 
     public HotKeys() {
         super("HotKeys", 300, 40, 80, 23, true);
-        stopAnimation();
+        this.widthAnimation = new Animation(200L, Easing.CUBIC_OUT);
+        this.xLine = new Animation(170L, Easing.SINE_OUT);
+        this.alpha = new Animation(200L, Easing.CUBIC_OUT);
+    }
+
+    private void drawBlurBackground(CustomDrawContext ctx, float x, float y, float width, float height, Theme theme, float animation) {
+        DrawUtil.drawBlur(
+                ctx.getMatrices(), x, y, width, height,
+                BLUR_STRENGTH,
+                BorderRadius.all(CORNER_RADIUS),
+                new ColorRGBA(255, 255, 255, (int) (animation * 255))
+        );
+
+        ColorRGBA themeColor = theme.getColor();
+        ColorRGBA backgroundColor = new ColorRGBA(
+                (int) (Math.min(255, Math.max(0, themeColor.getRed() * 0.15f))),
+                (int) (Math.min(255, Math.max(0, themeColor.getGreen() * 0.15f))),
+                (int) (Math.min(255, Math.max(0, themeColor.getBlue() * 0.15f))),
+                (int) (64 * animation)
+        );
+
+        DrawUtil.drawRoundedRect(
+                ctx.getMatrices(), x, y, width, height,
+                BorderRadius.all(CORNER_RADIUS),
+                backgroundColor
+        );
+    }
+
+    private List<ModuleStructure> getModules() {
+        if (Initialization.getInstance() == null
+                || Initialization.getInstance().getManager() == null
+                || Initialization.getInstance().getManager().getModuleProvider() == null) {
+            return java.util.Collections.emptyList();
+        }
+        return Initialization.getInstance().getManager().getModuleProvider().getModuleStructures();
+    }
+
+    private boolean isSkipped(ModuleStructure module) {
+        String name = module.getName();
+        return name.equals("Hud");
     }
 
     @Override
-    public boolean visible() {
-        return !scaleAnimation.isFinished(Direction.BACKWARDS);
-    }
+    public void renderPort(CustomDrawContext ctx, int alpha) {
+        float posX = this.getPx();
+        float posY = this.getPy();
+        float defaultWidth = 53.0F;
+        float height = 14.5F;
+        boolean isFound = false;
+        List<ModuleStructure> modules = getModules();
 
-    @Override
-    public void tick() {
-        if (Initialization.getInstance() == null ||
-                Initialization.getInstance().getManager() == null ||
-                Initialization.getInstance().getManager().getModuleProvider() == null) {
+        for (ModuleStructure module : modules) {
+            if (isSkipped(module)) {
+                continue;
+            }
+            if (module.isState() && module.getKey() != -1) {
+                this.alpha.update(1.0F);
+                isFound = true;
+            }
+
+            for (Setting setting : module.settings()) {
+                if (setting instanceof BooleanSetting) {
+                    BooleanSetting boolSetting = (BooleanSetting) setting;
+                    if (boolSetting.isValue() && boolSetting.getKey() != -1) {
+                        this.alpha.update(1.0F);
+                        isFound = true;
+                    }
+                }
+            }
+        }
+
+        if (!isFound && !(mc.currentScreen instanceof ChatScreen)) {
+            this.alpha.update(0.0F);
+        }
+
+        if (mc.currentScreen instanceof ChatScreen) {
+            this.alpha.update(1.0F);
+        }
+
+        if (this.alpha.getValue() < 0.01F) {
+            this.pw = 0.0F;
+            this.ph = 0.0F;
+            this.width = 0;
+            this.height = 0;
             return;
         }
 
-        keysList = Initialization.getInstance().getManager().getModuleProvider().getModuleStructures().stream()
-                .filter(module -> module.isState()
-                        && module.getKey() != GLFW.GLFW_KEY_UNKNOWN)
-                .toList();
+        Theme theme = new Theme();
 
-        boolean hasActiveKeys = !keysList.isEmpty();
-        boolean inChat = isChat(mc.currentScreen);
+        drawBlurBackground(ctx, posX, posY, this.widthAnimation.getValue(), 14.5F, theme, this.alpha.getValue());
 
-        if (hasActiveKeys || inChat) {
-            startAnimation();
-        } else {
-            stopAnimation();
-        }
+        ctx.drawText(Fonts.NURIKI, "C", posX + 4.25F, posY + 5.5F, 10.0F, theme.getColor().withAlpha(255.0F * this.alpha.getValue()));
 
-        if (!hasActiveKeys && inChat) {
-            long currentTime = System.currentTimeMillis();
-            if (currentTime - lastKeyChange >= 1000) {
-                List<String> availableKeys = List.of("A", "B", "C", "D", "E");
-                currentRandomKey = availableKeys.get(new Random().nextInt(availableKeys.size()));
-                lastKeyChange = currentTime;
+        ctx.drawText(Fonts.SEMIBOLD, " :", posX + 15.0F, posY + 4.75F, 7.0F, new ColorRGBA(166, 166, 166, 255.0F * this.alpha.getValue()));
+
+        ctx.drawText(Fonts.SEMIBOLD, "Hotkeys", posX + 20.5F, posY + 4.75F, 7.5F, (new ColorRGBA(-1)).withAlpha(255.0F * this.alpha.getValue()));
+
+        posY += 14.5F + 1.0F;
+        float bindWidth = 0.0F;
+
+        for (ModuleStructure module : modules) {
+            if (isSkipped(module)) {
+                continue;
             }
-        }
-    }
+            if (module.getAnimation().getOutput().floatValue() != 0.0F && module.getKey() != -1) {
+                float localBindWidth = Fonts.SEMIBOLD.getWidth(Keyboard.getKeyName(module.getKey()), 6.75F);
+                if (localBindWidth > bindWidth) {
+                    bindWidth = localBindWidth;
+                }
+            }
 
-    private float lerp(float current, float target, float deltaTime) {
-        float factor = (float) (1.0 - Math.pow(0.001, deltaTime * ANIMATION_SPEED));
-        return current + (target - current) * factor;
-    }
-
-    @Override
-    public void drawDraggable(DrawContext context, int alpha) {
-        if (alpha <= 0) return;
-
-        float alphaFactor = alpha / 255.0f;
-
-        long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastUpdateTime) / 1000.0f;
-        lastUpdateTime = currentTime;
-
-        deltaTime = Math.min(deltaTime, 0.1f);
-
-        float x = getX();
-        float y = getY();
-
-        boolean hasActiveKeys = !keysList.isEmpty();
-        boolean showExample = !hasActiveKeys && isChat(mc.currentScreen);
-
-        int offset = 23;
-        float targetWidth = 80;
-
-        if (showExample) {
-            offset += 11;
-            String name = "Example Module";
-            String bind = "[" + currentRandomKey + "]";
-            float bindWidth = Fonts.BOLD.getWidth(bind, 6);
-            float nameWidth = Fonts.BOLD.getWidth(name, 6);
-            targetWidth = Math.max(nameWidth + bindWidth + 50, targetWidth);
-        } else {
-            for (ModuleStructure module : keysList) {
-                offset += 11;
-
-                String bind = "[" + KeyHelper.getKeyName(module.getKey()) + "]";
-                float bindWidth = Fonts.BOLD.getWidth(bind, 6);
-                float nameWidth = Fonts.BOLD.getWidth(module.getName(), 6);
-                targetWidth = Math.max(nameWidth + bindWidth + 50, targetWidth);
+            for (Setting setting : module.settings()) {
+                if (setting instanceof BooleanSetting) {
+                    BooleanSetting boolSetting = (BooleanSetting) setting;
+                    if (boolSetting.isValue() && boolSetting.getKey() != -1) {
+                        float localBindWidth = Fonts.SEMIBOLD.getWidth(Keyboard.getKeyName(boolSetting.getKey()), 6.75F);
+                        if (localBindWidth > bindWidth) {
+                            bindWidth = localBindWidth;
+                        }
+                    }
+                }
             }
         }
 
-        float targetHeight = offset + 2;
+        this.xLine.update(bindWidth + 10.0F);
 
-        animatedWidth = lerp(animatedWidth, targetWidth, deltaTime);
-        animatedHeight = lerp(animatedHeight, targetHeight, deltaTime);
+        for (ModuleStructure module : modules) {
+            if (isSkipped(module)) {
+                continue;
+            }
+            if (module.getAnimation().getOutput().floatValue() != 0.0F && module.getKey() != -1) {
+                height += 11.0F + 1.0F;
+                String bind = Keyboard.getKeyName(module.getKey());
+                String moduleName = module.getName();
+                float elementsWidth = Fonts.SEMIBOLD.getWidth(moduleName, 7.0F) + Fonts.SEMIBOLD.getWidth(bind, 6.75F) + 50.0F;
 
-        if (Math.abs(animatedWidth - targetWidth) < 0.3f) {
-            animatedWidth = targetWidth;
-        }
-        if (Math.abs(animatedHeight - targetHeight) < 0.3f) {
-            animatedHeight = targetHeight;
-        }
+                float moduleAnim = module.getAnimation().getOutput().floatValue();
+                float elementAlpha = moduleAnim * this.alpha.getValue();
+                float elementY = posY + moduleAnim * 3.0F - 3.0F;
 
-        setWidth((int) Math.ceil(animatedWidth));
-        setHeight((int) Math.ceil(animatedHeight));
+                drawBlurBackground(ctx, posX, elementY, this.widthAnimation.getValue(), 11.0F, theme, elementAlpha);
 
-        float contentHeight = animatedHeight;
-        int bgAlpha = (int) (255 * alphaFactor);
+                float separatorX = posX + this.widthAnimation.getValue() - 6.0F - this.xLine.getValue();
+                ctx.drawText(Fonts.SEMIBOLD, ":", separatorX, elementY + 3.25F, 6.5F, new ColorRGBA(166, 166, 166, 255.0F * elementAlpha));
 
-        if (contentHeight > 0) {
-            Render2D.gradientRect(x, y, getWidth(), contentHeight,
-                    new int[]{
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(32, 32, 32, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(32, 32, 32, bgAlpha).getRGB()
-                    },
-                    5);
-            Render2D.outline(x, y, getWidth(), contentHeight, 0.35f, new Color(90, 90, 90, bgAlpha).getRGB(), 5);
-        }
+                ctx.drawText(Fonts.SEMIBOLD, moduleName, posX + 5.0F, elementY + 3.25F, 7.0F, (new ColorRGBA(-1)).withAlpha(elementAlpha * 255.0F));
 
-        Scissor.enable(x, y, getWidth(), contentHeight,2);
+                ctx.drawText(Fonts.SEMIBOLD, bind, posX + this.widthAnimation.getValue() - 3.0F - this.xLine.getValue() / 2.0F - Fonts.SEMIBOLD.getWidth(bind, 6.75F) / 2.0F, elementY + 3.25F, 6.5F, (new ColorRGBA(-1)).withAlpha(elementAlpha * 255.0F));
 
-        long activeModules = keysList.size();
-        String moduleCountText = String.valueOf(activeModules);
-        float countTextWidth = Fonts.BOLD.getWidth(moduleCountText, 6);
-        float activeTextWidth = Fonts.BOLD.getWidth("Active:", 6);
+                if (elementsWidth > defaultWidth) {
+                    defaultWidth = elementsWidth;
+                }
 
-        Render2D.gradientRect(x + getWidth() - countTextWidth - activeTextWidth + 2, y + 5, 14, 12,
-                new int[]{
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(52, 52, 52, bgAlpha).getRGB()
-                },
-                3);
+                posY += (11.0F + 1.0F) * moduleAnim;
+            }
 
-        Fonts.HUD_ICONS.draw("g", x + getWidth() - countTextWidth - activeTextWidth + 4, y + 6, 10, new Color(165, 165, 165, bgAlpha).getRGB());
+            for (Setting setting : module.settings()) {
+                if (setting instanceof BooleanSetting) {
+                    BooleanSetting boolSetting = (BooleanSetting) setting;
+                    if (boolSetting.isValue() && boolSetting.getKey() != -1) {
+                        height += 11.0F + 1.0F;
+                        String bind = Keyboard.getKeyName(boolSetting.getKey());
+                        String settingName = boolSetting.getName();
+                        float elementsWidth = Fonts.SEMIBOLD.getWidth(settingName, 7.0F) + Fonts.SEMIBOLD.getWidth(bind, 6.75F) + 50.0F;
 
-        Fonts.BOLD.draw("Binds", x + 8, y + 6.5f, 6, new Color(255, 255, 255, bgAlpha).getRGB());
+                        float elementAlpha = this.alpha.getValue();
+                        float elementY = posY - 3.0F;
 
-        int moduleOffset = 23;
+                        drawBlurBackground(ctx, posX, elementY, this.widthAnimation.getValue(), 11.0F, theme, elementAlpha);
 
-        if (showExample) {
-            String name = "Example Module";
-            String bind = "[" + currentRandomKey + "]";
+                        float separatorX = posX + this.widthAnimation.getValue() - 6.0F - this.xLine.getValue();
+                        ctx.drawText(Fonts.SEMIBOLD, ":", separatorX, elementY + 3.25F, 6.5F, new ColorRGBA(166, 166, 166, 255.0F * elementAlpha));
 
-            float bindWidth = Fonts.BOLD.getWidth(bind, 6);
+                        ctx.drawText(Fonts.SEMIBOLD, settingName, posX + 5.0F, elementY + 3.25F, 7.0F, (new ColorRGBA(-1)).withAlpha(elementAlpha * 255.0F));
 
-            float bindBoxX = x + getWidth() - bindWidth - 11.5f;
+                        ctx.drawText(Fonts.SEMIBOLD, bind, posX + this.widthAnimation.getValue() - 3.0F - this.xLine.getValue() / 2.0F - Fonts.SEMIBOLD.getWidth(bind, 6.75F) / 2.0F, elementY + 3.25F, 6.5F, (new ColorRGBA(-1)).withAlpha(elementAlpha * 255.0F));
 
-            Render2D.gradientRect(bindBoxX, y + moduleOffset - 2f, bindWidth + 4, 9,
-                    new int[]{
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB()
-                    },
-                    3);
+                        if (elementsWidth > defaultWidth) {
+                            defaultWidth = elementsWidth;
+                        }
 
-            Render2D.outline(bindBoxX, y + moduleOffset - 2f, bindWidth + 4, 9, 0.05f,
-                    new Color(132, 132, 132, bgAlpha).getRGB(), 2);
-
-            Render2D.rect(x + 8, y + moduleOffset - 1, 1f, 7,
-                    new Color(155, 155, 155, (int) (128 * alphaFactor)).getRGB(), 1);
-            Fonts.BOLD.draw(name, x + 13, y + moduleOffset - 1.5f, 6,
-                    new Color(255, 255, 255, bgAlpha).getRGB());
-            Fonts.BOLD.draw(bind, bindBoxX + 2, y + moduleOffset - 1, 6,
-                    new Color(165, 165, 165, bgAlpha).getRGB());
-        } else {
-            for (ModuleStructure module : keysList) {
-                String bind = "[" + KeyHelper.getKeyName(module.getKey()) + "]";
-
-                float bindWidth = Fonts.BOLD.getWidth(bind, 6);
-
-                int textColor = new Color(255, 255, 255, bgAlpha).getRGB();
-                int accentColor = new Color(165, 165, 165, bgAlpha).getRGB();
-                int separatorColor = new Color(155, 155, 155, (int) (128 * alphaFactor)).getRGB();
-
-                float bindBoxX = x + getWidth() - bindWidth - 11.5f;
-
-                Render2D.gradientRect(bindBoxX, y + moduleOffset - 2f, bindWidth + 4, 9,
-                        new int[]{
-                                new Color(52, 52, 52, bgAlpha).getRGB(),
-                                new Color(52, 52, 52, bgAlpha).getRGB(),
-                                new Color(52, 52, 52, bgAlpha).getRGB(),
-                                new Color(52, 52, 52, bgAlpha).getRGB()
-                        },
-                        3);
-
-                Render2D.outline(bindBoxX, y + moduleOffset - 2f, bindWidth + 4, 9, 0.05f,
-                        new Color(132, 132, 132, bgAlpha).getRGB(), 2);
-
-                Render2D.rect(x + 8, y + moduleOffset - 1, 1f, 7, separatorColor, 1);
-                Fonts.BOLD.draw(module.getName(), x + 13, y + moduleOffset - 1.5f, 6, textColor);
-                Fonts.BOLD.draw(bind, bindBoxX + 2, y + moduleOffset - 1, 6, accentColor);
-
-                moduleOffset += 11;
+                        posY += (11.0F + 1.0F);
+                    }
+                }
             }
         }
 
-        Scissor.disable();
+        this.widthAnimation.update(defaultWidth);
+        this.pw = this.widthAnimation.getValue();
+        this.ph = height;
+        this.width = (int) this.pw;
+        this.height = (int) this.ph;
     }
 }

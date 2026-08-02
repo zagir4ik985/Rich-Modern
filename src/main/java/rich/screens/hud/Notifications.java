@@ -1,21 +1,26 @@
 package rich.screens.hud;
 
-import net.minecraft.client.gui.DrawContext;
-import rich.client.draggables.AbstractHudElement;
-import rich.util.animations.Animation;
-import rich.util.animations.Direction;
-import rich.util.animations.OutBack;
-import rich.util.render.Render2D;
+import com.google.common.collect.Lists;
+import net.minecraft.text.Text;
+import rich.screens.hud.port.Animation;
+import rich.screens.hud.port.BorderRadius;
+import rich.screens.hud.port.ColorRGBA;
+import rich.screens.hud.port.CustomDrawContext;
+import rich.screens.hud.port.DrawUtil;
+import rich.screens.hud.port.Easing;
+import rich.screens.hud.port.PortHudElement;
+import rich.screens.hud.port.Theme;
+import rich.util.render.font.Font;
 import rich.util.render.font.Fonts;
 
-import java.awt.*;
 import java.util.ArrayList;
-import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 
-public class Notifications extends AbstractHudElement {
+public class Notifications extends PortHudElement {
 
-    private static final int FORCED_GUI_SCALE = 2;
+    private static final float blurStrength = 15.0f;
+    private static final float cornerRadius = 2.25f;
 
     private static Notifications instance;
 
@@ -23,212 +28,137 @@ public class Notifications extends AbstractHudElement {
         return instance;
     }
 
-    private final List<Notification> list = new ArrayList<>();
-    private static final float NOTIFICATION_HEIGHT = 16f;
-    private static final float NOTIFICATION_GAP = 3f;
+    private final Animation toggleAnimation;
+    private final List<BaseNotification> notifications;
 
     public Notifications() {
         super("Notifications", 0, 0, 110, 16, false);
         instance = this;
-    }
-
-    private int getCurrentGuiScale() {
-        int scale = mc.options.getGuiScale().getValue();
-        if (scale == 0) {
-            scale = mc.getWindow().calculateScaleFactor(0, mc.forcesUnicodeFont());
-        }
-        return scale;
-    }
-
-    private float getScaleFactor() {
-        return (float) getCurrentGuiScale() / (float) FORCED_GUI_SCALE;
-    }
-
-    private float getVirtualWidth() {
-        return mc.getWindow().getFramebufferWidth() / (float) FORCED_GUI_SCALE;
-    }
-
-    private float getVirtualHeight() {
-        return mc.getWindow().getFramebufferHeight() / (float) FORCED_GUI_SCALE;
+        this.toggleAnimation = new Animation(200L, Easing.CUBIC_OUT);
+        this.notifications = new ArrayList<>();
     }
 
     @Override
     public boolean visible() {
-        return !list.isEmpty();
-    }
-
-    @Override
-    public void tick() {
-        list.forEach(notif -> {
-            if (System.currentTimeMillis() > notif.removeTime ||
-                    (notif.text.contains("Hi I'm a notification") && !isChat(mc.currentScreen))) {
-                notif.anim.setDirection(Direction.BACKWARDS);
-            }
-        });
-        list.removeIf(notif -> notif.anim.isFinished(Direction.BACKWARDS));
-
-        if (isChat(mc.currentScreen)) {
-            boolean hasHiNotification = list.stream()
-                    .anyMatch(n -> n.text.contains("Hi I'm a notification"));
-            if (!hasHiNotification) {
-                addNotification("Hi I'm a notification", 99999999);
-            }
-        }
-
-        updatePosition();
-    }
-
-    private void updatePosition() {
-        if (mc.getWindow() == null) return;
-
-        float virtualWidth = getVirtualWidth();
-        float virtualHeight = getVirtualHeight();
-
-        float crosshairX = virtualWidth / 2f;
-        float crosshairY = virtualHeight / 2f;
-
-        this.setX((int) (crosshairX - 60));
-        this.setY((int) (crosshairY + 100));
+        return !notifications.isEmpty();
     }
 
     public void addNotification(String text, long duration) {
-        Animation anim = new OutBack().setMs(700).setValue(1);
-        anim.setDirection(Direction.FORWARDS);
-
-        int targetIndex = list.size();
-        float targetY = targetIndex * (NOTIFICATION_HEIGHT + NOTIFICATION_GAP);
-
-        Notification notification = new Notification(text, anim, System.currentTimeMillis(), System.currentTimeMillis() + duration);
-        notification.currentY = targetY;
-        notification.targetY = targetY;
-        notification.velocityY = 0;
-
-        list.add(notification);
-        if (list.size() > 12) list.removeFirst();
-        list.sort(Comparator.comparingDouble(notif -> -notif.removeTime));
-
-        updateTargetPositions();
+        addTextNotification("C", Text.literal(text), duration);
     }
 
-    private void updateTargetPositions() {
-        float offsetY = 0;
-        for (int i = 0; i < list.size(); i++) {
-            Notification notif = list.get(i);
-            float anim = notif.anim.getOutput().floatValue();
-            notif.targetY = offsetY;
-            offsetY += (NOTIFICATION_HEIGHT + NOTIFICATION_GAP) * anim;
-        }
+    public void addTextNotification(String icon, Text text) {
+        addTextNotification(icon, text, 1500L);
     }
 
-    private int clampAlpha(int value) {
-        return Math.max(0, Math.min(255, value));
+    public void addTextNotification(String icon, Text text, long duration) {
+        this.notifications.add(new TextNotification(icon, text, duration));
     }
 
-    private int clampAlpha(float value) {
-        return Math.max(0, Math.min(255, (int) value));
+    private static void drawBlurBackground(CustomDrawContext ctx, float x, float y, float width, float height, Theme theme, float animation) {
+        DrawUtil.drawBlur(
+                ctx.getMatrices(), x, y, width, height,
+                blurStrength,
+                BorderRadius.all(cornerRadius),
+                new ColorRGBA(255, 255, 255, (int) (animation * 255))
+        );
+
+        ColorRGBA themeColor = theme.getColor();
+
+        ColorRGBA backgroundColor = new ColorRGBA(
+                (int) (Math.min(255, Math.max(0, themeColor.getRed() * 0.15f))),
+                (int) (Math.min(255, Math.max(0, themeColor.getGreen() * 0.15f))),
+                (int) (Math.min(255, Math.max(0, themeColor.getBlue() * 0.15f))),
+                (int) (64 * animation)
+        );
+
+        DrawUtil.drawRoundedRect(
+                ctx.getMatrices(), x, y, width, height,
+                BorderRadius.all(cornerRadius),
+                backgroundColor
+        );
     }
 
     @Override
-    public void drawDraggable(DrawContext context, int alpha) {
-        alpha = clampAlpha(alpha);
-        if (alpha <= 0) return;
+    public void renderPort(CustomDrawContext ctx, int alpha) {
+        Iterator<BaseNotification> iterator = this.notifications.iterator();
+        Theme theme = new Theme();
+        Font textFont = Fonts.MEDIUM;
+        float notificationHeight = 14.5F;
+        float y = (float) mc.getWindow().getScaledHeight() / 2.0F + 16.0F;
 
-        float alphaFactor = alpha / 255.0f;
-        updatePosition();
-        updateTargetPositions();
+        BaseNotification n;
+        float gap = 1.5F;
 
-        float springStiffness = 180f;
-        float damping = 12f;
-        float deltaTime = 0.016f;
-
-        for (Notification notification : list) {
-            float diff = notification.targetY - notification.currentY;
-            float springForce = diff * springStiffness;
-            float dampingForce = notification.velocityY * damping;
-            float acceleration = springForce - dampingForce;
-
-            notification.velocityY += acceleration * deltaTime;
-            notification.currentY += notification.velocityY * deltaTime;
-
-            if (Math.abs(diff) < 0.01f && Math.abs(notification.velocityY) < 0.01f) {
-                notification.currentY = notification.targetY;
-                notification.velocityY = 0;
-            }
+        for (Iterator<BaseNotification> var11 = Lists.reverse(this.notifications).iterator(); var11.hasNext(); ) {
+            n = var11.next();
+            n.render(ctx, (float) mc.getWindow().getScaledWidth() / 2.0F, y, textFont, theme, notificationHeight);
+            y += (notificationHeight + gap) * n.alphaAnimation.getValue();
         }
 
-        float offsetX = 5;
-        float maxWidth = 0;
-        float totalHeight = 0;
-
-        for (Notification notification : list) {
-            float anim = notification.anim.getOutput().floatValue();
-            if (anim <= 0.01f) continue;
-
-            anim = Math.max(0f, Math.min(1f, anim));
-
-            float textWidth = Fonts.BOLD.getWidth(notification.text, 6);
-            float width = textWidth + offsetX * 2 + 22;
-            maxWidth = Math.max(maxWidth, width);
-
-            float startY = this.getY() + notification.currentY;
-            float startX = this.getX() + (120 - width) / 2;
-
-            int bgAlpha = clampAlpha(225 * anim * alphaFactor);
-            int icAlpha = clampAlpha(155 * anim * alphaFactor);
-
-            if (bgAlpha > 0) {
-                Render2D.gradientRect(startX, startY, width, NOTIFICATION_HEIGHT,
-                        new int[]{
-                                new Color(52, 52, 52, bgAlpha).getRGB(),
-                                new Color(32, 32, 32, bgAlpha).getRGB(),
-                                new Color(52, 52, 52, bgAlpha).getRGB(),
-                                new Color(32, 32, 32, bgAlpha).getRGB()
-                        }, 4);
-
-                Render2D.outline(startX, startY, width, NOTIFICATION_HEIGHT, 0.35f,
-                        new Color(90, 90, 90, bgAlpha).getRGB(), 4);
-
-                Render2D.outline(startX + 2.75f, startY + 2, 12, 12, 0.35f,
-                        new Color(90, 90, 90, bgAlpha).getRGB(), 4);
-
-                Fonts.BOLD.draw(notification.text, startX + offsetX + 16, startY + 4.5f, 6,
-                        new Color(255, 255, 255, bgAlpha).getRGB());
-
-                Fonts.GUI_ICONS.draw("C", startX + 5f, startY + 4f, 8,
-                        new Color(255, 255, 255, icAlpha).getRGB());
+        while (iterator.hasNext()) {
+            BaseNotification notification = iterator.next();
+            if (!notification.fadingOut && System.currentTimeMillis() - notification.timestamp > notification.duration) {
+                notification.fadingOut = true;
+                notification.alphaAnimation.update(0.0F);
             }
 
-            totalHeight = Math.max(totalHeight, notification.currentY + NOTIFICATION_HEIGHT);
+            if (notification.fadingOut && notification.alphaAnimation.getValue() < 0.01F) {
+                iterator.remove();
+            } else {
+                notification.alphaAnimation.update(notification.fadingOut ? 0.0F : 1.0F);
+            }
         }
-
-        if (maxWidth > 0) {
-            setWidth((int) Math.ceil(maxWidth));
-        }
-        setHeight((int) Math.ceil(Math.max(NOTIFICATION_HEIGHT, totalHeight)));
     }
 
-    public static class Notification {
-        String text;
-        Animation anim;
-        long startTime;
-        long removeTime;
+    private static class TextNotification extends BaseNotification {
+        final String icon;
+        final Text text;
+        final long duration;
 
-        float currentY;
-        float targetY;
-        float velocityY;
-
-        Notification(String text, Animation anim, long startTime, long removeTime) {
+        TextNotification(String icon, Text text, long duration) {
+            this.icon = icon;
             this.text = text;
-            this.anim = anim;
-            this.startTime = startTime;
-            this.removeTime = removeTime;
-            this.currentY = 0;
-            this.targetY = 0;
-            this.velocityY = 0;
+            this.duration = duration;
         }
 
-        boolean isExpired() {
-            return System.currentTimeMillis() > removeTime;
+        @Override
+        void render(CustomDrawContext ctx, float x, float y, Font textFont, Theme theme, float notificationHeight) {
+            if (this.timestamp == 0L) {
+                this.timestamp = System.currentTimeMillis();
+            }
+
+            float iconBgWidth = 14.0F;
+            Text moduleName = this.text;
+            float moduleNameWidth = textFont.getWidth(moduleName.getString(), 7.25F);
+            float width = iconBgWidth + 6.0F + moduleNameWidth;
+
+            Font iconFont = Fonts.ICONS;
+
+            x -= width / 2.0F;
+
+            drawBlurBackground(ctx, x, y, width, notificationHeight, theme, this.alphaAnimation.getValue());
+
+            float iconX = x + (17F - iconFont.getWidth(this.icon, 6.75F)) / 2.0F;
+            float iconY = y + 1F + (notificationHeight - iconFont.getHeight(6.75F)) / 2.0F;
+            ctx.drawText(iconFont, this.icon, iconX, iconY, 6.75F, theme.getColor().withAlpha(this.alphaAnimation.getValue() * 255.0F));
+
+            float textX = x + iconBgWidth + 1.65F;
+            float textY = y + (notificationHeight - textFont.getHeight(7.25F)) / 2.0F;
+            ctx.drawText(textFont, moduleName.getString(), textX + 3.5F, textY, 7.25F, this.alphaAnimation.getValue() * 255.0F);
         }
+    }
+
+    private abstract static class BaseNotification {
+        long timestamp;
+        boolean fadingOut = false;
+        final Animation alphaAnimation;
+        long duration = 1500L;
+
+        private BaseNotification() {
+            this.alphaAnimation = new Animation(300L, Easing.CUBIC_OUT);
+        }
+
+        abstract void render(CustomDrawContext ctx, float x, float y, Font textFont, Theme theme, float notificationHeight);
     }
 }

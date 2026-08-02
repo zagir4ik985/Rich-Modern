@@ -1,396 +1,324 @@
 package rich.screens.hud;
 
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.component.type.NbtComponent;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import rich.client.draggables.AbstractHudElement;
-import rich.util.ColorUtil;
-import rich.util.animations.Direction;
-import rich.util.render.Render2D;
-import rich.util.render.shader.Scissor;
+import rich.screens.hud.port.Animation;
+import rich.screens.hud.port.BorderRadius;
+import rich.screens.hud.port.ColorRGBA;
+import rich.screens.hud.port.CustomDrawContext;
+import rich.screens.hud.port.DrawUtil;
+import rich.screens.hud.port.Easing;
+import rich.screens.hud.port.PortHudElement;
+import rich.screens.hud.port.Theme;
 import rich.util.render.font.Fonts;
-import rich.util.render.item.ItemRender;
 
-import java.awt.*;
 import java.util.*;
-import java.util.List;
 
-public class CoolDowns extends AbstractHudElement {
+public class CoolDowns extends PortHudElement {
 
-    private static final int FORCED_GUI_SCALE = 2;
+    private final Animation widthAnimation;
+    private final Animation alpha;
+    private final Map<Item, Animation> itemAnimations = new HashMap<>();
+    private final Map<Item, CooldownTrack> cooldownTracks = new HashMap<>();
 
-    private static class CoolDownInfo {
-        Item item;
-        long startTime;
-        float startProgress;
-        long estimatedTotalMs;
-        int displaySeconds = -1;
-        long nextTickTime = 0;
-        boolean estimateReady = false;
-
-        CoolDownInfo(Item item, float progress) {
-            this.item = item;
-            this.startTime = System.currentTimeMillis();
-            this.startProgress = progress;
-            this.estimatedTotalMs = 0;
-            this.nextTickTime = 0;
-            this.estimateReady = false;
-        }
-
-        void updateEstimate(float currentProgress) {
-            if (estimateReady) return;
-
-            long now = System.currentTimeMillis();
-            long elapsed = now - startTime;
-
-            if (elapsed < 200) return;
-
-            if (startProgress > currentProgress && startProgress > 0.01f) {
-                float progressConsumed = startProgress - currentProgress;
-                if (progressConsumed > 0.01f) {
-                    estimatedTotalMs = (long) (elapsed / progressConsumed);
-
-                    long remainingMs = (long) (currentProgress * estimatedTotalMs);
-                    displaySeconds = (int) Math.ceil(remainingMs / 1000.0);
-                    nextTickTime = now + 1000;
-                    estimateReady = true;
-                }
-            }
-        }
-
-        int getDisplaySeconds(float currentProgress) {
-            if (currentProgress <= 0) {
-                displaySeconds = 0;
-                return 0;
-            }
-
-            if (!estimateReady) {
-                return -1;
-            }
-
-            long now = System.currentTimeMillis();
-
-            if (now >= nextTickTime && nextTickTime > 0) {
-                displaySeconds = Math.max(0, displaySeconds - 1);
-                nextTickTime = now + 1000;
-
-                int calculatedSeconds;
-                if (estimatedTotalMs > 0) {
-                    long remainingMs = (long) (currentProgress * estimatedTotalMs);
-                    calculatedSeconds = (int) Math.ceil(remainingMs / 1000.0);
-                } else {
-                    calculatedSeconds = displaySeconds;
-                }
-
-                if (Math.abs(displaySeconds - calculatedSeconds) > 2) {
-                    displaySeconds = calculatedSeconds;
-                }
-            }
-
-            return Math.max(0, displaySeconds);
-        }
-    }
-
-    private final Map<Item, CoolDownInfo> cooldownMap = new LinkedHashMap<>();
-    private final Map<Item, Float> cooldownAnimations = new LinkedHashMap<>();
-    private final Set<Item> activeCooldowns = new HashSet<>();
-
-    private float animatedWidth = 80;
-    private float animatedHeight = 23;
-    private long lastRenderTime = System.currentTimeMillis();
-
-    private long lastItemChange = 0;
-    private int currentItemIndex = 0;
-
-    private static final float ANIMATION_SPEED = 8.0f;
-    private static final float ITEM_SCALE = 0.5f;
-    private static final String TIMER_TEMPLATE = "00:00";
-    private static final Item[] EXAMPLE_ITEMS = {
-            Items.ENDER_EYE, Items.ENDER_PEARL, Items.SUGAR, Items.MACE, Items.ENCHANTED_GOLDEN_APPLE,
-            Items.TRIDENT, Items.CROSSBOW, Items.DRIED_KELP, Items.NETHERITE_SCRAP
-    };
+    private static final float blurStrength = 15.0f;
+    private static final float cornerRadius = 2.25f;
 
     public CoolDowns() {
-        super("CoolDowns", 10, 40, 80, 23, true);
-        stopAnimation();
+        super("CoolDowns", 200, 100, 75, 30, true);
+        this.widthAnimation = new Animation(200L, Easing.CUBIC_OUT);
+        this.alpha = new Animation(200L, Easing.CUBIC_OUT);
+    }
+
+    private void drawBlurBackground(CustomDrawContext ctx, float x, float y, float width, float height, Theme theme, float animation) {
+        DrawUtil.drawBlur(
+                ctx.getMatrices(), x, y, width, height,
+                blurStrength,
+                BorderRadius.all(cornerRadius),
+                new ColorRGBA(255, 255, 255, (int) (animation * 255))
+        );
+
+        ColorRGBA themeColor = theme.getColor();
+        ColorRGBA backgroundColor = new ColorRGBA(
+                (int) (Math.min(255, Math.max(0, themeColor.getRed() * 0.15f))),
+                (int) (Math.min(255, Math.max(0, themeColor.getGreen() * 0.15f))),
+                (int) (Math.min(255, Math.max(0, themeColor.getBlue() * 0.15f))),
+                (int) (64 * animation)
+        );
+        DrawUtil.drawRoundedRect(
+                ctx.getMatrices(), x, y, width, height,
+                BorderRadius.all(cornerRadius),
+                backgroundColor
+        );
     }
 
     @Override
-    public boolean visible() {
-        return !scaleAnimation.isFinished(Direction.BACKWARDS);
-    }
+    public void renderPort(CustomDrawContext ctx, int alpha) {
+        if (mc.player == null) return;
 
-    @Override
-    public void tick() {
-        if (mc.player == null) {
-            cooldownMap.clear();
-            activeCooldowns.clear();
-            cooldownAnimations.clear();
-            stopAnimation();
+        float posX = this.getPx();
+        float posY = this.getPy();
+        float defaultWidth = 75.0F;
+        float height = 14.5F;
+
+        Theme theme = new Theme();
+
+        List<CooldownEntry> cooldowns = new ArrayList<>();
+
+        Item[] vanillaItems = {
+                Items.ENDER_PEARL,
+                Items.CHORUS_FRUIT,
+                Items.SHIELD,
+                Items.CROSSBOW,
+                Items.TRIDENT,
+                Items.GOAT_HORN,
+                Items.GOLDEN_APPLE,
+                Items.ENCHANTED_GOLDEN_APPLE,
+                Items.FIREWORK_ROCKET
+        };
+
+        for (Item item : vanillaItems) {
+            ItemStack stack = new ItemStack(item);
+            float progress = mc.player.getItemCooldownManager().getCooldownProgress(stack, mc.getRenderTickCounter().getTickProgress(true));
+            if (progress > 0.0F && progress < 1.0F) {
+                float remainingSeconds = trackAndEstimate(item, progress);
+                cooldowns.add(new CooldownEntry(item, getItemName(item), remainingSeconds, stack));
+            } else {
+                cooldownTracks.remove(item);
+            }
+        }
+
+        Set<Item> customChecked = new HashSet<>();
+        for (int i = 0; i < mc.player.getInventory().size(); i++) {
+            ItemStack stack = mc.player.getInventory().getStack(i);
+            if (stack.isEmpty()) continue;
+
+            float progress = mc.player.getItemCooldownManager().getCooldownProgress(stack, mc.getRenderTickCounter().getTickProgress(true));
+            if (progress > 0.0F && progress < 1.0F) {
+                String customName = getCustomItemName(stack);
+                if (customName != null && !customChecked.contains(stack.getItem())) {
+                    customChecked.add(stack.getItem());
+                    float remainingSeconds = trackAndEstimate(stack.getItem(), progress);
+                    cooldowns.add(new CooldownEntry(stack.getItem(), customName, remainingSeconds, stack));
+                }
+            } else {
+                if (getCustomItemName(stack) != null) {
+                    cooldownTracks.remove(stack.getItem());
+                }
+            }
+        }
+
+        for (CooldownEntry entry : cooldowns) {
+            itemAnimations.putIfAbsent(entry.item, new Animation(150L, Easing.CUBIC_OUT));
+            itemAnimations.get(entry.item).update(1.0F);
+        }
+
+        itemAnimations.entrySet().removeIf(e -> {
+            boolean found = cooldowns.stream().anyMatch(c -> c.item == e.getKey());
+            if (!found) {
+                e.getValue().update(0.0F);
+                return e.getValue().getValue() < 0.01F;
+            }
+            return false;
+        });
+
+        boolean hasCooldowns = !cooldowns.isEmpty();
+
+        if (!hasCooldowns && !(mc.currentScreen instanceof ChatScreen)) {
+            this.alpha.update(0.0F);
+        } else {
+            this.alpha.update(1.0F);
+        }
+
+        if (this.alpha.getValue() < 0.01F) {
+            this.pw = 0.0F;
+            this.ph = 0.0F;
+            this.width = 0;
+            this.height = 0;
             return;
         }
 
-        activeCooldowns.clear();
-        Set<Item> checkedItems = new HashSet<>();
+        drawBlurBackground(ctx, posX, posY, this.widthAnimation.getValue(), 14.5F, theme, this.alpha.getValue());
 
-        for (int i = 0; i < mc.player.getInventory().size(); i++) {
-            ItemStack stack = mc.player.getInventory().getStack(i);
-            if (!stack.isEmpty() && !checkedItems.contains(stack.getItem())) {
-                checkedItems.add(stack.getItem());
-                checkAndUpdateCooldown(stack.getItem());
+        ctx.drawText(Fonts.NURIKI, "T", posX + 4.25F, posY + 5.5F, 10.0F, theme.getColor().withAlpha(255.0F * this.alpha.getValue()));
+
+        ctx.drawText(Fonts.SEMIBOLD, ":", posX + 15.25F, posY + 4F, 8.3F, new ColorRGBA(166, 166, 166, 255.0F * this.alpha.getValue()));
+
+        ctx.drawText(Fonts.SEMIBOLD, "Cooldowns", posX + 18.5F, posY + 4.75F, 7.5F, (new ColorRGBA(-1)).withAlpha(255.0F * this.alpha.getValue()));
+
+        posY += 14.5F + 1.0F;
+
+        for (CooldownEntry entry : cooldowns) {
+            Animation anim = itemAnimations.get(entry.item);
+            if (anim == null || anim.getValue() < 0.01F) continue;
+
+            float elementAlpha = anim.getValue() * this.alpha.getValue();
+            float elementY = posY + anim.getValue() * 3.0F - 3.0F;
+
+            height += (11.0F + 2.0F) * anim.getValue();
+
+            drawBlurBackground(ctx, posX, elementY, this.widthAnimation.getValue(), 11.0F, theme, elementAlpha);
+
+            ctx.drawText(Fonts.SEMIBOLD, entry.name, posX + 5.0F, elementY + 3.25F, 7.0F, (new ColorRGBA(-1)).withAlpha(elementAlpha * 255.0F));
+
+            String timeText = formatTime(entry.remainingSeconds);
+            float timeWidth = Fonts.SEMIBOLD.getWidth(timeText, 6.75F);
+            float timerX = posX + this.widthAnimation.getValue() - 20.0F - timeWidth;
+            ctx.drawText(Fonts.SEMIBOLD, timeText, timerX, elementY + 3.25F, 6.75F, (new ColorRGBA(-1)).withAlpha(elementAlpha * 255.0F));
+
+            float separatorX = posX + this.widthAnimation.getValue() - 12.0F;
+            ctx.drawText(Fonts.SEMIBOLD, ":", separatorX, elementY + 3.25F, 6.5F, new ColorRGBA(166, 166, 166, 255.0F * elementAlpha));
+
+            ctx.pushMatrix();
+            ctx.getMatrices().translate(posX + this.widthAnimation.getValue() - 14.0F, elementY + 1.5F);
+            ctx.getMatrices().scale(0.5F, 0.5F);
+            ctx.drawItem(entry.stack, 0, 0);
+            ctx.popMatrix();
+
+            float elementsWidth = Fonts.SEMIBOLD.getWidth(entry.name, 7.0F) + timeWidth + 35.0F;
+            if (elementsWidth > defaultWidth) {
+                defaultWidth = elementsWidth;
             }
+
+            posY += (11.0F + 2.0F) * anim.getValue();
         }
 
-        ItemStack mainHand = mc.player.getMainHandStack();
-        if (!mainHand.isEmpty() && !checkedItems.contains(mainHand.getItem())) {
-            checkAndUpdateCooldown(mainHand.getItem());
-        }
-        ItemStack offHand = mc.player.getOffHandStack();
-        if (!offHand.isEmpty() && !checkedItems.contains(offHand.getItem())) {
-            checkAndUpdateCooldown(offHand.getItem());
+        this.widthAnimation.update(defaultWidth);
+        this.pw = this.widthAnimation.getValue();
+        this.ph = height;
+        this.width = (int) this.pw;
+        this.height = (int) this.ph;
+    }
+
+    private float trackAndEstimate(Item item, float progress) {
+        long now = System.currentTimeMillis();
+        CooldownTrack track = cooldownTracks.get(item);
+
+        if (track == null || progress > track.firstProgress + 0.05f) {
+            track = new CooldownTrack();
+            track.firstTimeMs = now;
+            track.firstProgress = progress;
+            cooldownTracks.put(item, track);
         }
 
-        boolean shouldShow = !cooldownAnimations.isEmpty() || isChat(mc.currentScreen);
-        if (shouldShow) {
-            startAnimation();
-        } else {
-            stopAnimation();
+        long elapsedMs = now - track.firstTimeMs;
+        float progressDecreased = track.firstProgress - progress;
+
+        if (progressDecreased > 0.02f && elapsedMs > 200) {
+            float elapsedSeconds = elapsedMs / 1000.0f;
+            float ratePerSecond = progressDecreased / elapsedSeconds;
+            return Math.max(0, progress / ratePerSecond);
         }
 
-        if (cooldownAnimations.isEmpty() && isChat(mc.currentScreen)) {
-            long currentTime = System.currentTimeMillis();
-            if (currentTime - lastItemChange >= 1000) {
-                currentItemIndex = (currentItemIndex + 1) % EXAMPLE_ITEMS.length;
-                lastItemChange = currentTime;
-            }
+        return progress * 15.0f;
+    }
+
+    private String getItemName(Item item) {
+        if (item == Items.ENDER_PEARL) return "Ender Pearl";
+        if (item == Items.CHORUS_FRUIT) return "Chorus Fruit";
+        if (item == Items.SHIELD) return "Shield";
+        if (item == Items.CROSSBOW) return "Crossbow";
+        if (item == Items.TRIDENT) return "Trident";
+        if (item == Items.GOAT_HORN) return "Goat Horn";
+        if (item == Items.GOLDEN_APPLE) return "Golden Apple";
+        if (item == Items.ENCHANTED_GOLDEN_APPLE) return "Enchanted Apple";
+        if (item == Items.FIREWORK_ROCKET) return "Firework";
+        return item.getName().getString();
+    }
+
+    private String getCustomItemName(ItemStack stack) {
+        if (stack.isEmpty()) return null;
+
+        NbtComponent customData = stack.get(DataComponentTypes.CUSTOM_DATA);
+        if (customData == null) return null;
+
+        if (customData.copyNbt().contains("pyrotechnic-item")) {
+            String pyroType = customData.copyNbt().getString("pyrotechnic-item").orElse("");
+            if ("ALTERNATIVE_TRAP".equals(pyroType)) return "Trap";
+            if ("EXPLOSIVE_TRAP".equals(pyroType)) return "Explosive Trap";
+            if ("STUN_STAR".equals(pyroType)) return "Stun";
+        }
+
+        if (customData.copyNbt().contains("kringeItems")) {
+            String kringeType = customData.copyNbt().getString("kringeItems").orElse("");
+            if ("ExplosiveStuff".equals(kringeType)) return "Explosive Thing";
+        }
+
+        if (customData.copyNbt().contains("desorientation")) {
+            return "Disorientation";
+        }
+
+        if (customData.copyNbt().contains("stratum")) {
+            return "Stratum";
+        }
+
+        if (customData.copyNbt().contains("trap")) {
+            return "Trap";
+        }
+
+        if (customData.copyNbt().contains("sheerdust")) {
+            return "Sheer Dust";
+        }
+
+        if (customData.copyNbt().contains("godsaura")) {
+            return "Gods Aura";
+        }
+
+        if (customData.copyNbt().contains("sphereEffect")) {
+            String sphereType = customData.copyNbt().getString("sphereEffect").orElse("");
+            if (sphereType.contains("speed")) return "Speed Sphere";
+            if (sphereType.contains("strength")) return "Strength Sphere";
+            if (sphereType.contains("regeneration")) return "Regen Sphere";
+            if (sphereType.contains("resistance")) return "Resistance Sphere";
+            if (sphereType.contains("fire_resistance")) return "Fire Res Sphere";
+            if (sphereType.contains("invisibility")) return "Invisibility Sphere";
+            if (sphereType.contains("night_vision")) return "Night Vision Sphere";
+            if (sphereType.contains("water_breathing")) return "Water Breathing Sphere";
+            if (sphereType.contains("jump_boost")) return "Jump Boost Sphere";
+            if (sphereType.contains("absorption")) return "Absorption Sphere";
+            if (sphereType.contains("health_boost")) return "Health Boost Sphere";
+            return "Sphere";
+        }
+
+        return null;
+    }
+
+    private String formatTime(float seconds) {
+        if (seconds <= 0) {
+            return "0s";
+        }
+        if (seconds >= 60.0F) {
+            int totalSec = (int) Math.ceil(seconds);
+            int minutes = totalSec / 60;
+            int secs = totalSec % 60;
+            return String.format("%d:%02d", minutes, secs);
+        }
+        if (seconds < 1.0F) {
+            return String.format("%.1fs", seconds);
+        }
+        return String.format("%ds", (int) Math.ceil(seconds));
+    }
+
+    private static class CooldownEntry {
+        final Item item;
+        final String name;
+        final float remainingSeconds;
+        final ItemStack stack;
+
+        CooldownEntry(Item item, String name, float remainingSeconds, ItemStack stack) {
+            this.item = item;
+            this.name = name;
+            this.remainingSeconds = remainingSeconds;
+            this.stack = stack;
         }
     }
 
-    private void checkAndUpdateCooldown(Item item) {
-        if (mc.player == null) return;
-
-        var cooldownManager = mc.player.getItemCooldownManager();
-        ItemStack stack = item.getDefaultStack();
-
-        if (cooldownManager.isCoolingDown(stack)) {
-            float progress = cooldownManager.getCooldownProgress(stack, 0.0f);
-            activeCooldowns.add(item);
-
-            CoolDownInfo info = cooldownMap.get(item);
-            if (info == null) {
-                info = new CoolDownInfo(item, progress);
-                cooldownMap.put(item, info);
-            } else {
-                info.updateEstimate(progress);
-            }
-
-            if (!cooldownAnimations.containsKey(item)) {
-                cooldownAnimations.put(item, 0f);
-            }
-        }
-    }
-
-    private String formatDuration(int seconds) {
-        if (seconds < 0) return "...";
-        if (seconds == 0) return "0:00";
-        int minutes = seconds / 60;
-        int secs = seconds % 60;
-        return String.format("%d:%02d", minutes, secs);
-    }
-
-    @Override
-    public void drawDraggable(DrawContext context, int alpha) {
-        if (alpha <= 0) return;
-
-        float alphaFactor = alpha / 255.0f;
-
-        long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastRenderTime) / 1000.0f;
-        lastRenderTime = currentTime;
-        deltaTime = Math.min(deltaTime, 0.1f);
-
-        List<Item> toRemove = new ArrayList<>();
-        for (Map.Entry<Item, Float> entry : cooldownAnimations.entrySet()) {
-            Item item = entry.getKey();
-            float currentAnim = entry.getValue();
-            float targetAnim = activeCooldowns.contains(item) ? 1f : 0f;
-            float newAnim = currentAnim + (targetAnim - currentAnim) * Math.min(1f, deltaTime * ANIMATION_SPEED);
-
-            if (Math.abs(newAnim - targetAnim) < 0.01f) {
-                newAnim = targetAnim;
-            }
-
-            if (newAnim <= 0.01f && targetAnim == 0f) {
-                toRemove.add(item);
-            } else {
-                cooldownAnimations.put(item, newAnim);
-            }
-        }
-        for (Item item : toRemove) {
-            cooldownAnimations.remove(item);
-            cooldownMap.remove(item);
-        }
-
-        float x = getX();
-        float y = getY();
-
-        int offset = 23;
-        float targetWidth = 80;
-
-        boolean hasAnimatingCooldowns = !cooldownAnimations.isEmpty();
-        int blurTint = ColorUtil.rgba(0, 0, 0, 0);
-        Render2D.blur(x, y, 1, 1, 0f, 0, blurTint);
-
-        float fixedTimerWidth = Fonts.BOLD.getWidth(TIMER_TEMPLATE, 6);
-
-        if (!hasAnimatingCooldowns) {
-            offset += 11;
-            String name = "Example CoolDown";
-            float nameWidth = Fonts.BOLD.getWidth(name, 6);
-            targetWidth = Math.max(nameWidth + fixedTimerWidth + 55, targetWidth);
-        } else {
-            for (Map.Entry<Item, Float> entry : cooldownAnimations.entrySet()) {
-                Item item = entry.getKey();
-                float animation = entry.getValue();
-                if (animation <= 0) continue;
-
-                CoolDownInfo info = cooldownMap.get(item);
-                if (info == null) continue;
-
-                offset += (int) (animation * 11);
-
-                String name = item.getDefaultStack().getName().getString();
-                float nameWidth = Fonts.BOLD.getWidth(name, 6);
-                targetWidth = Math.max(nameWidth + fixedTimerWidth + 55, targetWidth);
-            }
-        }
-
-        float targetHeight = offset + 2;
-
-        animatedWidth = animatedWidth + (targetWidth - animatedWidth) * Math.min(1f, deltaTime * ANIMATION_SPEED);
-        animatedHeight = animatedHeight + (targetHeight - animatedHeight) * Math.min(1f, deltaTime * ANIMATION_SPEED);
-
-        if (Math.abs(animatedWidth - targetWidth) < 0.3f) animatedWidth = targetWidth;
-        if (Math.abs(animatedHeight - targetHeight) < 0.3f) animatedHeight = targetHeight;
-
-        setWidth((int) Math.ceil(animatedWidth));
-        setHeight((int) Math.ceil(animatedHeight));
-
-        float contentHeight = animatedHeight;
-        int bgAlpha = (int) (255 * alphaFactor);
-
-        if (contentHeight > 0) {
-            Render2D.gradientRect(x, y, getWidth(), contentHeight,
-                    new int[]{
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(32, 32, 32, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(32, 32, 32, bgAlpha).getRGB()
-                    }, 5);
-            Render2D.outline(x, y, getWidth(), contentHeight, 0.35f, new Color(90, 90, 90, bgAlpha).getRGB(), 5);
-        }
-
-        Scissor.enable(x, y, getWidth(), contentHeight, FORCED_GUI_SCALE);
-
-        Render2D.gradientRect(x + getWidth() - 22.5f, y + 5, 14, 12,
-                new int[]{
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(52, 52, 52, bgAlpha).getRGB()
-                }, 3);
-
-        Fonts.ICONS.draw("D", x + getWidth() - 20f, y + 6.5f, 9, new Color(165, 165, 165, bgAlpha).getRGB());
-        Fonts.BOLD.draw("CoolDowns", x + 8, y + 6.5f, 6, new Color(255, 255, 255, bgAlpha).getRGB());
-
-        int moduleOffset = 23;
-        float timerBoxWidth = fixedTimerWidth + 4;
-        float fixedTimerBoxX = x + getWidth() - timerBoxWidth - 9.5f;
-
-        if (!hasAnimatingCooldowns) {
-            Item item = EXAMPLE_ITEMS[currentItemIndex];
-            String name = "Example CoolDown";
-            String duration = "0:00";
-
-            Render2D.gradientRect(fixedTimerBoxX + 1, y + moduleOffset - 1f, timerBoxWidth, 9,
-                    new int[]{
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB()
-                    }, 3);
-
-            Render2D.blur(x, y, 1, 1, 0f, 0, blurTint);
-
-            Render2D.outline(fixedTimerBoxX + 1, y + moduleOffset - 1f, timerBoxWidth, 9, 0.05f,
-                    new Color(132, 132, 132, bgAlpha).getRGB(), 2);
-
-            float itemX = x + 8;
-            float itemY = y + moduleOffset - 1f;
-
-            if (ItemRender.needsContextRender(item.getDefaultStack())) {
-                ItemRender.drawItemWithContext(context, item.getDefaultStack(), itemX, itemY, ITEM_SCALE, alphaFactor);
-            } else {
-                ItemRender.drawItem(item.getDefaultStack(), itemX, itemY, ITEM_SCALE, alphaFactor);
-            }
-
-            float nameX = x + 20;
-            Fonts.BOLD.draw(name, nameX, y + moduleOffset - 1f, 6, new Color(255, 255, 255, bgAlpha).getRGB());
-
-            float durationWidth = Fonts.BOLD.getWidth(duration, 6);
-            float durationX = fixedTimerBoxX + (timerBoxWidth - durationWidth) / 2;
-            Fonts.BOLD.draw(duration, durationX + 1, y + moduleOffset, 6, new Color(165, 165, 165, bgAlpha).getRGB());
-        } else {
-            for (Map.Entry<Item, Float> entry : cooldownAnimations.entrySet()) {
-                Item item = entry.getKey();
-                float animation = entry.getValue();
-                if (animation <= 0) continue;
-
-                CoolDownInfo info = cooldownMap.get(item);
-                if (info == null) continue;
-
-                var cooldownManager = mc.player.getItemCooldownManager();
-                float currentProgress = cooldownManager.getCooldownProgress(item.getDefaultStack(), 0.0f);
-
-                String name = item.getDefaultStack().getName().getString();
-                int remainingSeconds = info.getDisplaySeconds(currentProgress);
-                String duration = formatDuration(remainingSeconds);
-
-                int textAlpha = (int) (255 * animation * alphaFactor);
-
-                Render2D.gradientRect(fixedTimerBoxX + 1, y + moduleOffset - 1f, timerBoxWidth, 9,
-                        new int[]{
-                                new Color(52, 52, 52, textAlpha).getRGB(),
-                                new Color(52, 52, 52, textAlpha).getRGB(),
-                                new Color(52, 52, 52, textAlpha).getRGB(),
-                                new Color(52, 52, 52, textAlpha).getRGB()
-                        }, 3);
-                Render2D.blur(x, y, 1, 1, 0f, 0, blurTint);
-
-                Render2D.outline(fixedTimerBoxX + 1, y + moduleOffset - 1f, timerBoxWidth, 9, 0.05f,
-                        new Color(132, 132, 132, textAlpha).getRGB(), 2);
-
-                float itemX = x + 8;
-                float itemY = y + moduleOffset - 1f;
-
-                if (ItemRender.needsContextRender(item.getDefaultStack())) {
-                    ItemRender.drawItemWithContext(context, item.getDefaultStack(), itemX, itemY, ITEM_SCALE, animation * alphaFactor);
-                } else {
-                    ItemRender.drawItem(item.getDefaultStack(), itemX, itemY, ITEM_SCALE, animation * alphaFactor);
-                }
-
-                float nameX = x + 20;
-                Fonts.BOLD.draw(name, nameX, y + moduleOffset - 0.5f, 6, new Color(255, 255, 255, textAlpha).getRGB());
-
-                float durationWidth = Fonts.BOLD.getWidth(duration, 6);
-                float durationX = fixedTimerBoxX + (timerBoxWidth - durationWidth) / 2;
-                Fonts.BOLD.draw(duration, durationX + 1, y + moduleOffset, 6, new Color(165, 165, 165, textAlpha).getRGB());
-
-                moduleOffset += (int) (animation * 11);
-            }
-        }
-
-        Scissor.disable();
+    private static class CooldownTrack {
+        long firstTimeMs;
+        float firstProgress;
     }
 }

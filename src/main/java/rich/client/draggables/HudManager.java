@@ -23,7 +23,7 @@ public class HudManager {
         register(new Watermark());
         register(new HotKeys());
         register(new Notifications());
-        register(new test());
+        register(new HootBar());
         register(new Potions());
         register(new CoolDowns());
         register(new TargetHud());

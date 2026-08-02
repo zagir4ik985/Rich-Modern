@@ -1,145 +1,118 @@
 package rich.screens.hud;
 
-import net.minecraft.client.gui.DrawContext;
 import net.minecraft.item.ItemStack;
-import rich.client.draggables.AbstractHudElement;
-import rich.util.animations.Direction;
-import rich.util.render.Render2D;
-import rich.util.render.item.ItemRender;
+import rich.screens.hud.port.Animation;
+import rich.screens.hud.port.BorderRadius;
+import rich.screens.hud.port.ColorRGBA;
+import rich.screens.hud.port.CustomDrawContext;
+import rich.screens.hud.port.DrawUtil;
+import rich.screens.hud.port.Easing;
+import rich.screens.hud.port.PortHudElement;
+import rich.screens.hud.port.Theme;
+import rich.util.render.font.Fonts;
 
-import java.awt.*;
-import java.util.ArrayList;
-import java.util.List;
+public class Inventory extends PortHudElement {
 
-public class Inventory extends AbstractHudElement {
-
-    private static final int SLOT_SIZE = 12;
-    private static final int SLOTS_PER_ROW = 9;
-    private static final int INVENTORY_ROWS = 3;
-    private static final float ITEM_SCALE = 0.5f;
-
-    private int filledSlots = 0;
+    private final Animation toggleAnimation;
+    private final Animation inventoryChangeAnimation;
+    private String lastInventoryHash;
+    private float lastWidth;
+    private float lastHeight;
 
     public Inventory() {
-        super("Inventory", 20, 60, 200, 80, true);
-        stopAnimation();
+        super("Inventory", 250, 150, 180, 60, true);
+        this.toggleAnimation = new Animation(300L, Easing.SINE_IN_OUT);
+        this.inventoryChangeAnimation = new Animation(150L, Easing.SINE_IN_OUT);
+        this.lastInventoryHash = "";
+        this.lastWidth = 0.0F;
+        this.lastHeight = 0.0F;
     }
 
     @Override
-    public boolean visible() {
-        return !scaleAnimation.isFinished(Direction.BACKWARDS);
-    }
-
-    @Override
-    public void tick() {
+    public void renderPort(CustomDrawContext ctx, int alpha) {
         if (mc.player == null) {
-            filledSlots = 0;
-            stopAnimation();
-            return;
-        }
+            this.toggleAnimation.update(0.0F);
+            if (this.toggleAnimation.getValue() > 0.01F) {
+                this.renderInventory(ctx, this.toggleAnimation.getValue());
+            }
+        } else {
+            this.toggleAnimation.update(1.0F);
+            if (!(this.toggleAnimation.getValue() <= 0.01F)) {
+                String currentInventoryHash = "";
 
-        filledSlots = 0;
-        for (int i = 9; i < 36; i++) {
-            ItemStack stack = mc.player.getInventory().getStack(i);
-            if (!stack.isEmpty()) {
-                filledSlots++;
+                for (int i = 9; i < 36; ++i) {
+                    ItemStack stack = mc.player.getInventory().getStack(i);
+                    currentInventoryHash = currentInventoryHash + stack.getItem().toString() + stack.getCount();
+                }
+
+                if (!currentInventoryHash.equals(this.lastInventoryHash)) {
+                    this.inventoryChangeAnimation.update(0.0F);
+                    this.lastInventoryHash = currentInventoryHash;
+                }
+
+                this.inventoryChangeAnimation.update(1.0F);
+                this.renderInventory(ctx, this.toggleAnimation.getValue() * this.inventoryChangeAnimation.getValue());
             }
         }
-
-        boolean hasItems = filledSlots > 0;
-        boolean inChat = isChat(mc.currentScreen);
-
-        if (hasItems || inChat) {
-            startAnimation();
-        } else {
-            stopAnimation();
-        }
     }
 
-    @Override
-    public void drawDraggable(DrawContext context, int alpha) {
-        if (alpha <= 0) return;
-        if (mc.player == null) return;
+    private void renderInventory(CustomDrawContext ctx, float animationValue) {
+        if (mc.player == null) {
+            Theme theme = new Theme();
+            ColorRGBA bgColor = theme.getForegroundColor();
+            ctx.getMatrices().pushMatrix();
+            ctx.getMatrices().translate(this.px + this.lastWidth / 2.0F, this.py + this.lastHeight / 2.0F);
+            ctx.getMatrices().scale(animationValue, animationValue);
+            ctx.getMatrices().translate(-(this.px + this.lastWidth / 2.0F), -(this.py + this.lastHeight / 2.0F));
+            ctx.drawRoundedRect(this.px, this.py, this.lastWidth, this.lastHeight, BorderRadius.all(4.0F), bgColor);
+            ctx.getMatrices().popMatrix();
+        } else {
+            float slotSize = 20.0F;
+            float borderRadius = 4.0F;
+            Theme theme = new Theme();
+            ColorRGBA graySlotColor = theme.getForegroundColor();
+            ColorRGBA themeSlotColor = theme.getForegroundLight();
+            int columns = 9;
+            int rows = 3;
+            float gridWidth = (float) columns * slotSize;
+            float gridHeight = (float) rows * slotSize;
+            this.pw = gridWidth;
+            this.ph = gridHeight;
+            this.width = (int) gridWidth;
+            this.height = (int) gridHeight;
+            this.lastWidth = this.pw;
+            this.lastHeight = this.ph;
+            ctx.getMatrices().pushMatrix();
+            ctx.getMatrices().translate(this.px + this.pw / 2.0F, this.py + this.ph / 2.0F);
+            ctx.getMatrices().scale(animationValue, animationValue);
+            ctx.getMatrices().translate(-(this.px + this.pw / 2.0F), -(this.py + this.ph / 2.0F));
+            DrawUtil.drawBlurHud(ctx.getMatrices(), this.px, this.py, this.pw, this.ph, 21.0F, BorderRadius.all(4.0F), ColorRGBA.WHITE);
 
-        float alphaFactor = alpha / 255.0f;
-
-        float x = getX();
-        float y = getY();
-
-        float padding = 6;
-        float slotGap = 1;
-
-        float slotsWidth = SLOTS_PER_ROW * SLOT_SIZE + (SLOTS_PER_ROW - 1) * slotGap;
-        float slotsHeight = INVENTORY_ROWS * SLOT_SIZE + (INVENTORY_ROWS - 1) * slotGap;
-
-        float contentWidth = slotsWidth + padding * 2;
-        float contentHeight = slotsHeight + padding * 2;
-
-        setWidth((int) contentWidth);
-        setHeight((int) (contentHeight + 4));
-
-        float contentY = y;
-
-        int bgAlpha = (int) (255 * alphaFactor);
-
-        Render2D.gradientRect(x + 2, contentY + 2, contentWidth - 4, contentHeight - 4,
-                new int[]{
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(32, 32, 32, bgAlpha).getRGB(),
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(32, 32, 32, bgAlpha).getRGB()
-                },
-                5);
-
-        Render2D.outline(x + 2, contentY + 2, contentWidth - 4, contentHeight - 4, 0.35f, new Color(90, 90, 90, bgAlpha).getRGB(), 5);
-
-        float slotsStartX = x + padding;
-        float slotsStartY = contentY + padding;
-
-        List<CountLabel> countLabels = new ArrayList<>();
-
-        for (int row = 0; row < INVENTORY_ROWS; row++) {
-            for (int col = 0; col < SLOTS_PER_ROW; col++) {
-                int slotIndex = 9 + row * SLOTS_PER_ROW + col;
-
-                float slotX = slotsStartX + col * (SLOT_SIZE + slotGap);
-                float slotY = slotsStartY + row * (SLOT_SIZE + slotGap);
-
-                ItemStack stack = mc.player.getInventory().getStack(slotIndex);
-
-                Render2D.rect(slotX, slotY, SLOT_SIZE, SLOT_SIZE, new Color(28, 28, 28, bgAlpha).getRGB(), 2);
-
-                if (!stack.isEmpty()) {
-                    float itemSize = 16 * ITEM_SCALE;
-                    float itemX = slotX + (SLOT_SIZE - itemSize) / 2;
-                    float itemY = slotY + (SLOT_SIZE - itemSize) / 2;
-
-                    if (ItemRender.needsContextRender(stack)) {
-                        ItemRender.drawItemWithContext(context, stack, itemX, itemY, ITEM_SCALE, alphaFactor);
-                    } else {
-                        ItemRender.drawItem(stack, itemX, itemY, ITEM_SCALE, alphaFactor);
-                    }
-
-                    int count = stack.getCount();
-                    if (count > 1) {
-                        countLabels.add(new CountLabel(slotX, slotY, count));
+            for (int row = 0; row < rows; ++row) {
+                for (int col = 0; col < columns; ++col) {
+                    int slotIndex = 9 + row * 9 + col;
+                    ItemStack stack = mc.player.getInventory().getStack(slotIndex);
+                    float slotX = this.px + (float) col * slotSize;
+                    float slotY = this.py + (float) row * slotSize;
+                    ColorRGBA slotColor = (row + col) % 2 == 0 ? graySlotColor : themeSlotColor;
+                    float round = 4.0F;
+                    BorderRadius radius = col == 0 && row == 0 ? BorderRadius.top(round, 0.0F) : (col == 8 && row == 0 ? BorderRadius.top(0.0F, round) : (col == 0 && row == 2 ? BorderRadius.bottom(round, 0.0F) : (col == 8 && row == 2 ? BorderRadius.bottom(0.0F, round) : BorderRadius.ZERO)));
+                    ctx.drawRoundedRect(slotX, slotY, slotSize, slotSize, radius, slotColor);
+                    if (!stack.isEmpty()) {
+                        ctx.pushMatrix();
+                        ctx.getMatrices().translate(slotX + (slotSize - 12.8F) / 2.0F, slotY + (slotSize - 12.8F) / 2.0F);
+                        ctx.getMatrices().scale(0.8F, 0.8F);
+                        ctx.drawItem(stack, 0, 0);
+                        ctx.drawItemBar(stack, 0, 0);
+                        ctx.drawCooldownProgress(stack, 0, 0);
+                        ctx.popMatrix();
                     }
                 }
             }
-        }
 
-        int textAlpha = (int) (255 * alphaFactor);
-        int textColor = (textAlpha << 24) | 0xFFFFFF;
-
-        for (CountLabel label : countLabels) {
-            String countText = String.valueOf(label.count);
-            int textWidth = mc.textRenderer.getWidth(countText);
-            int textX = (int) (label.slotX + SLOT_SIZE - textWidth);
-            int textY = (int) (label.slotY + SLOT_SIZE - mc.textRenderer.fontHeight + 1);
-
-            context.drawText(mc.textRenderer, countText, textX, textY, textColor, true);
+            ctx.drawRoundedBorder(this.px, this.py, gridWidth, gridHeight, 0.1F, BorderRadius.all(4.0F), theme.getForegroundStroke());
+            DrawUtil.drawRoundedCorner(ctx.getMatrices(), this.px, this.py, gridWidth, gridHeight, 0.1F, 20.0F, theme.getColor(), BorderRadius.all(4.0F));
+            ctx.getMatrices().popMatrix();
         }
     }
-
-    private record CountLabel(float slotX, float slotY, int count) {}
 }

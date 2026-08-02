@@ -21,6 +21,7 @@
     "HandledScreenMixin",
     "HeldItemRendererMixin",
     "IClientWorld",
+    "InGameHudAccessor",
     "InGameHudMixin",
     "InGameOverlayRendererMixin",
     "InventoryScreenMixin",

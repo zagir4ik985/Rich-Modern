@@ -1,282 +1,202 @@
 package rich.screens.hud;
 
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.LivingEntityRenderer;
-import net.minecraft.client.render.entity.state.LivingEntityRenderState;
+import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.util.DefaultSkinHelper;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.EquipmentSlot;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.ItemStack;
 import net.minecraft.util.Identifier;
-import rich.client.draggables.AbstractHudElement;
+import net.minecraft.util.math.MathHelper;
 import rich.modules.impl.combat.Aura;
-import rich.util.ColorUtil;
-import rich.util.network.Network;
-import rich.util.render.Render2D;
+import rich.modules.impl.player.NameProtect;
+import rich.screens.hud.port.Animation;
+import rich.screens.hud.port.BorderRadius;
+import rich.screens.hud.port.ColorRGBA;
+import rich.screens.hud.port.CustomDrawContext;
+import rich.screens.hud.port.DrawUtil;
+import rich.screens.hud.port.Easing;
+import rich.screens.hud.port.PortHudElement;
+import rich.screens.hud.port.Theme;
+import rich.util.Instance;
 import rich.util.render.font.Fonts;
-import rich.util.string.PlayerInteractionHelper;
-import rich.util.timer.StopWatch;
 
-import java.awt.*;
+import java.util.Iterator;
+import java.util.List;
 
-public class TargetHud extends AbstractHudElement {
+public class TargetHud extends PortHudElement {
 
-    private final StopWatch stopWatch = new StopWatch();
-    private LivingEntity lastTarget;
+    private final Animation healthAnimation;
+    private final Animation outdatedHealthAnimation;
+    private final Animation gappleAnimation;
+    private final Animation toggleAnimation;
+    private final Animation toggleAnimationMetanoise;
+    private LivingEntity target;
 
-    private float healthAnimation = 0;
-    private float trailAnimation = 0;
-    private float absorptionAnimation = 0;
-    private float displayedHealth = 0;
-    private long lastUpdateTime = System.currentTimeMillis();
-    private long startTime = System.currentTimeMillis();
+    private final float blurStrength = 15.0f;
+    private final float cornerRadius = 5.0f;
 
     public TargetHud() {
-        super("TargetHud", 10, 80, 112, 40, true);
+        super("TargetHud", 300, 60, 100, 40, true);
+        this.healthAnimation = new Animation(250L, Easing.CUBIC_OUT);
+        this.outdatedHealthAnimation = new Animation(650L, Easing.CUBIC_OUT);
+        this.gappleAnimation = new Animation(250L, Easing.CUBIC_OUT);
+        this.toggleAnimation = new Animation(250L, Easing.CUBIC_OUT);
+        this.toggleAnimationMetanoise = new Animation(1850L, Easing.CUBIC_OUT);
+    }
+
+    private void drawBlurBackground(CustomDrawContext ctx, float x, float y, float width, float height, Theme theme, float animation) {
+        DrawUtil.drawBlur(
+                ctx.getMatrices(), x, y, width, height,
+                blurStrength,
+                BorderRadius.all(cornerRadius),
+                new ColorRGBA(255, 255, 255, (int) (animation * 255))
+        );
+
+        ColorRGBA themeColor = theme.getColor();
+        ColorRGBA backgroundColor = new ColorRGBA(
+                (int) (Math.min(255, Math.max(0, themeColor.getRed() * 0.25f))),
+                (int) (Math.min(255, Math.max(0, themeColor.getGreen() * 0.25f))),
+                (int) (Math.min(255, Math.max(0, themeColor.getBlue() * 0.25f))),
+                (int) (64 * animation)
+        );
+
+        DrawUtil.drawRoundedRect(
+                ctx.getMatrices(), x, y, width, height,
+                BorderRadius.all(cornerRadius),
+                backgroundColor
+        );
     }
 
     @Override
-    public boolean visible() {
-        return true;
-    }
-
-    @Override
-    public void tick() {
-        LivingEntity auraTarget = Aura.target;
-        if (auraTarget != null) {
-            lastTarget = auraTarget;
-            startAnimation();
-            stopWatch.reset();
-        } else if (isChat(mc.currentScreen)) {
-            lastTarget = mc.player;
-            startAnimation();
-            stopWatch.reset();
-        } else if (stopWatch.finished(10)) {
-            stopAnimation();
+    public void renderPort(CustomDrawContext ctx, int alpha) {
+        LivingEntity target = mc.currentScreen instanceof ChatScreen ? mc.player : Aura.target;
+        this.setTarget(target);
+        if (this.target != null && this.toggleAnimation.getValue() > 0.0F) {
+            this.renderTargetHud(ctx, this.target, this.toggleAnimation.getValue());
         }
     }
 
-    private float lerp(float current, float target, float deltaTime, float speed) {
-        float factor = (float) (1.0 - Math.pow(0.001, deltaTime * speed));
-        return current + (target - current) * factor;
-    }
-
-    private float snapToStep(float value, float step) {
-        return Math.round(value / step) * step;
-    }
-
-    private float getHealth(LivingEntity entity) {
-        if (entity.isInvisible() && !Network.isSpookyTime() && !Network.isCopyTime()) {
-            return entity.getMaxHealth();
-        }
-        return entity.getHealth();
-    }
-
-    private String getHealthString(float health) {
-        if (lastTarget != null && lastTarget.isInvisible() && !Network.isSpookyTime() && !Network.isCopyTime()) {
-            return "??";
-        }
-        if (health >= 100) {
-            return String.valueOf((int) health);
-        } else if (health >= 10) {
-            return String.format("%.1f", health);
+    private void renderTargetHud(CustomDrawContext ctx, LivingEntity target, float animation) {
+        float posX = this.getPx();
+        float posY = this.getPy();
+        float width = 100.5F;
+        float height = 40.0F;
+        Theme theme = new Theme();
+        float hp = target.getHealth();
+        this.healthAnimation.update(hp / target.getMaxHealth());
+        if (this.outdatedHealthAnimation.getValue() < this.healthAnimation.getValue()) {
+            this.outdatedHealthAnimation.setValue(this.healthAnimation.getValue());
+            this.outdatedHealthAnimation.setStartValue(this.healthAnimation.getValue());
         } else {
-            return String.format("%.2f", health);
-        }
-    }
-
-    @Override
-    public void drawDraggable(DrawContext context, int alpha) {
-        if (alpha <= 0) return;
-        if (lastTarget == null) return;
-
-        long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastUpdateTime) / 1000.0f;
-        lastUpdateTime = currentTime;
-        deltaTime = Math.min(deltaTime, 0.1f);
-
-        float x = getX();
-        float y = getY();
-
-        setWidth(112);
-        setHeight(40);
-
-        float scaleAlpha = scaleAnimation.getOutput().floatValue();
-
-        drawBackground(x, y, scaleAlpha);
-        drawFace(x, y, scaleAlpha);
-        drawContent(x, y, scaleAlpha, deltaTime);
-    }
-
-    private void drawBackground(float x, float y, float alpha) {
-        int alphaInt = (int) (255 * alpha);
-
-        Render2D.gradientRect(x + 2, y + 2, getWidth() - 4, getHeight() - 4,
-                new int[]{
-                        new Color(52, 52, 52, alphaInt).getRGB(),
-                        new Color(22, 22, 22, alphaInt).getRGB(),
-                        new Color(52, 52, 52, alphaInt).getRGB(),
-                        new Color(22, 22, 22, alphaInt).getRGB()
-                },
-                6);
-
-        Render2D.outline(x + 2, y + 2, getWidth() - 4, getHeight() - 4, 0.35f, new Color(90, 90, 90, alphaInt).getRGB(), 5);
-
-        int blurTint = ColorUtil.rgba(0, 0, 0, 0);
-        Render2D.blur(x + 2, y + 2, 1, 1, 0f, 7, blurTint);
-    }
-
-    private void drawFace(float x, float y, float alpha) {
-        EntityRenderer<? super LivingEntity, ?> baseRenderer = mc.getEntityRenderDispatcher().getRenderer(lastTarget);
-        if (!(baseRenderer instanceof LivingEntityRenderer<?, ?, ?>)) {
-            return;
+            this.outdatedHealthAnimation.update(hp / target.getMaxHealth());
         }
 
-        @SuppressWarnings("unchecked")
-        LivingEntityRenderer<LivingEntity, LivingEntityRenderState, ?> renderer =
-                (LivingEntityRenderer<LivingEntity, LivingEntityRenderState, ?>) baseRenderer;
+        this.gappleAnimation.update(target.getAbsorptionAmount() / target.getMaxHealth());
 
-        LivingEntityRenderState state = renderer.getAndUpdateRenderState(lastTarget, lastTickDelta);
-        Identifier textureLocation = renderer.getTexture(state);
+        drawBlurBackground(ctx, posX, posY, width, height, theme, animation);
 
-        float faceSize = 24;
-        float faceX = x + 9;
-        float faceY = y + 8;
+        Identifier skinTextures = null;
+        Iterator<PlayerListEntry> var11 = mc.getNetworkHandler().getPlayerList().iterator();
 
-        float hurtPercent = lastTarget.hurtTime > 0 ? lastTarget.hurtTime / 10.0f : 0.0f;
-        int r = 255;
-        int g = (int) (255 * (1.0f - hurtPercent));
-        int b = (int) (255 * (1.0f - hurtPercent));
-        int color = new Color(r, g, b, (int) (255 * alpha)).getRGB();
-
-        float u0 = 8f / 64f;
-        float v0 = 8f / 64f;
-        float u1 = 16f / 64f;
-        float v1 = 16f / 64f;
-
-        Render2D.texture(textureLocation, faceX, faceY, faceSize, faceSize,
-                u0, v0, u1, v1, color, 0, 4f);
-
-        float hatScale = 1.1f;
-        float hatSize = faceSize * hatScale;
-        float hatOffset = (hatSize - faceSize) / 2f;
-
-        float hatU0 = 40f / 64f;
-        float hatV0 = 8f / 64f;
-        float hatU1 = 48f / 64f;
-        float hatV1 = 16f / 64f;
-
-        Render2D.texture(textureLocation, faceX - hatOffset, faceY - hatOffset, hatSize, hatSize,
-                hatU0, hatV0, hatU1, hatV1, color, 0f, 4f);
-    }
-
-    private void drawContent(float x, float y, float alpha, float deltaTime) {
-        float faceSize = 24;
-        float faceX = x + 9;
-        float contentX = faceX + faceSize + 6;
-        float nameY = y + 13;
-
-        float hp = getHealth(lastTarget);
-        float maxHp = lastTarget.getMaxHealth();
-        float absorp = lastTarget.getAbsorptionAmount();
-
-        boolean isInvisible = lastTarget.isInvisible() && !Network.isSpookyTime() && !Network.isCopyTime();
-
-        float targetDisplayHealth;
-        if (isInvisible) {
-            targetDisplayHealth = maxHp;
-        } else {
-            targetDisplayHealth = hp + absorp;
-        }
-        displayedHealth = lerp(displayedHealth, targetDisplayHealth, deltaTime, 5f);
-        float snappedHealth = snapToStep(displayedHealth, 0.25f);
-
-        String hpStr = getHealthString(snappedHealth);
-
-        String name = lastTarget.getName().getString();
-        float hpWidth = Fonts.BOLD.getWidth(hpStr, 5.5f);
-
-        Fonts.BOLD.draw(name, contentX, nameY, 5.5f,
-                new Color(255, 255, 255, (int) (255 * alpha)).getRGB());
-
-        int hpColor = new Color(215, 215, 215, (int) (255 * alpha)).getRGB();
-        Fonts.BOLD.draw(hpStr, x + getWidth() - 10 - hpWidth, nameY, 5.5f, hpColor);
-
-        float targetHealth;
-        if (isInvisible) {
-            targetHealth = 1.0f;
-        } else {
-            targetHealth = hp / maxHp;
-        }
-        healthAnimation = lerp(healthAnimation, targetHealth, deltaTime, 3f);
-
-        if (targetHealth > trailAnimation) {
-            trailAnimation = targetHealth;
-        }
-        trailAnimation = lerp(trailAnimation, targetHealth, deltaTime, 3.5f);
-
-        float targetAbsorption;
-        if (isInvisible) {
-            targetAbsorption = 0;
-        } else {
-            targetAbsorption = absorp / maxHp;
-        }
-        absorptionAnimation = lerp(absorptionAnimation, targetAbsorption, deltaTime, 3f);
-
-        float barX = contentX;
-        float barY = nameY + 12f;
-        float barWidth = 64;
-        float barHeight = 4;
-        float barRadius = 2;
-
-        Render2D.rect(barX, barY, barWidth, barHeight,
-                new Color(30, 30, 30, (int) (200 * alpha)).getRGB(), barRadius);
-
-        float healthPercent = Math.max(0, Math.min(1, healthAnimation));
-        float trailPercent = Math.max(0, Math.min(1, trailAnimation));
-
-        if (trailPercent > healthPercent) {
-            int trailColor = new Color(55, 55, 55, (int) (160 * alpha)).getRGB();
-            Render2D.rect(barX, barY, barWidth * trailPercent, barHeight, trailColor, barRadius);
-        }
-
-        if (healthPercent > 0.01f) {
-            long elapsed = System.currentTimeMillis() - startTime;
-            float waveSpeed = 1500f;
-            float wavePhase = (elapsed % (long) waveSpeed) / waveSpeed * (float) Math.PI * 2f;
-
-            int[] colors = new int[4];
-            for (int i = 0; i < 2; i++) {
-                float charWave = (float) Math.sin(wavePhase - i * 1.5f);
-                float waveFactor = (charWave + 1f) / 2f;
-
-                int baseGray = (int) (155 + 100 * waveFactor);
-
-                colors[i * 2] = new Color(baseGray, baseGray, baseGray, (int) (255 * alpha)).getRGB();
-                colors[i * 2 + 1] = new Color(baseGray, baseGray, baseGray, (int) (255 * alpha)).getRGB();
+        while (var11.hasNext()) {
+            PlayerListEntry playerListEntry = var11.next();
+            if (playerListEntry.getProfile().name().equals(target.getNameForScoreboard())) {
+                skinTextures = playerListEntry.getSkinTextures().body().texturePath();
             }
-
-            Render2D.gradientRect(barX, barY, barWidth * healthPercent, barHeight, colors, barRadius);
         }
 
-        float absorptionPercent = Math.max(0, Math.min(1, absorptionAnimation));
-        if (absorptionPercent > 0.01f && !Network.isFunTime()) {
-            long elapsed = System.currentTimeMillis() - startTime;
-            float waveSpeed = 1200f;
-            float wavePhase = (elapsed % (long) waveSpeed) / waveSpeed * (float) Math.PI * 2f;
+        if (skinTextures == null) {
+            skinTextures = DefaultSkinHelper.getSteve().body().texturePath();
+        }
 
-            int[] goldColors = new int[4];
-            for (int i = 0; i < 2; i++) {
-                float charWave = (float) Math.sin(wavePhase - i * 1.5f);
-                float waveFactor = (charWave + 1f) / 2f;
+        float headSize = 32.0F;
+        DrawUtil.drawPlayerHeadWithRoundedShader(ctx.getMatrices(), skinTextures, posX + 4.0F, posY + 4.0F, headSize,
+                BorderRadius.all(3.0F), ColorRGBA.WHITE.withAlpha(animation * 255.0F));
 
-                int cr = 255;
-                int cg = (int) (165 + 50 * waveFactor);
-                int cb = 0;
+        NameProtect nameProtect = Instance.get(NameProtect.class);
+        String playerName = target == mc.player && nameProtect != null && nameProtect.isState() ? nameProtect.getCustomName() : target.getNameForScoreboard();
+        if (playerName.length() > 11) {
+            playerName = playerName.substring(0, 7) + "...";
+        }
+        ctx.drawText(Fonts.SEMIBOLD, playerName, posX + headSize + 8.0F, posY + 6.5F, 8.0F,
+                ColorRGBA.WHITE.withAlpha(animation * 255.0F));
 
-                goldColors[i * 2] = new Color(cr, cg, cb, (int) (200 * alpha)).getRGB();
-                goldColors[i * 2 + 1] = new Color(cr, cg, cb, (int) (200 * alpha)).getRGB();
+        String hpText = "HP: " + String.format("%.1f", hp).replace(",", ".") +
+                (target.getAbsorptionAmount() > 0.0F ? " (" + String.format("%.1f", target.getAbsorptionAmount()).replace(",", ".") + ")" : "");
+        ctx.drawText(Fonts.SEMIBOLD, hpText, posX + headSize + 8.0F, posY + 17.5F, 6.5F,
+                ColorRGBA.WHITE.withAlpha(animation * 255.0F));
+
+        float barX = posX + headSize + 7.2F;
+        float barY = posY + 27.8F;
+        float barWidth = width - headSize - 12.0F;
+        float barHeight = 7.4F;
+
+        DrawUtil.drawRoundedRect(ctx.getMatrices(), barX, barY, barWidth, barHeight, BorderRadius.all(3.0F),
+                new ColorRGBA(50, 50, 50, (int) (animation * 150)));
+
+        float healthWidth = MathHelper.clamp(barWidth * this.healthAnimation.getValue(), 0.0F, barWidth);
+        if (healthWidth > 0) {
+            DrawUtil.drawRoundedRect(ctx.getMatrices(), barX, barY, healthWidth, barHeight, BorderRadius.all(3.0F),
+                    theme.getSecondColor().withAlpha((int) (animation * 255)),
+                    theme.getSecondColor().withAlpha((int) (animation * 255)),
+                    theme.getColor().withAlpha((int) (animation * 255)),
+                    theme.getColor().withAlpha((int) (animation * 255)));
+        }
+
+        float absorptionWidth = MathHelper.clamp(barWidth * this.gappleAnimation.getValue(), 0.0F, barWidth);
+        if (absorptionWidth > 0) {
+            DrawUtil.drawRoundedRect(ctx.getMatrices(), barX, barY, absorptionWidth, barHeight, BorderRadius.all(3.0F),
+                    new ColorRGBA(255, 220, 0, (int) (animation * 255)));
+        }
+
+        if (target instanceof PlayerEntity) {
+            this.drawArmor(ctx, (PlayerEntity) target, posX + width - 65.0F, posY - 12.0F);
+        }
+
+        this.pw = width;
+        this.ph = height;
+        this.width = (int) width;
+        this.height = (int) height;
+    }
+
+    private void drawArmor(CustomDrawContext ctx, PlayerEntity player, float posX, float posY) {
+        float boxSizeItem = 10.0F;
+        float paddingItem = 0.0F;
+        float iconX = posX + (5.0F - this.toggleAnimation.getValue() * 5.0F);
+        float iconY = posY + 1.0F + (5.0F - this.toggleAnimation.getValue() * 5.0F);
+        ItemStack[] items = new ItemStack[]{player.getMainHandStack(), player.getOffHandStack(), player.getEquippedStack(EquipmentSlot.HEAD), player.getEquippedStack(EquipmentSlot.CHEST), player.getEquippedStack(EquipmentSlot.LEGS), player.getEquippedStack(EquipmentSlot.FEET)};
+
+        for (ItemStack stack : items) {
+            if (!stack.isEmpty()) {
+                ctx.getMatrices().pushMatrix();
+                ctx.getMatrices().translate(iconX + (boxSizeItem - 9.6F) / 2.0F, iconY + (boxSizeItem - 9.6F) / 2.0F);
+                ctx.getMatrices().scale(0.6F * this.toggleAnimation.getValue(), 0.6F * this.toggleAnimation.getValue());
+                ctx.drawItem(stack, 0, 0);
+                ctx.drawItemBar(stack, 0, 0);
+                ctx.drawCooldownProgress(stack, 0, 0);
+                ctx.getMatrices().popMatrix();
+                iconX += boxSizeItem + paddingItem;
             }
+        }
+    }
 
-            Render2D.gradientRect(barX, barY, barWidth * absorptionPercent, barHeight, goldColors, barRadius);
+    public void setTarget(LivingEntity target) {
+        if (target == null) {
+            this.toggleAnimation.update(0.0F);
+            this.toggleAnimationMetanoise.update(0.0F);
+            this.toggleAnimationMetanoise.setDuration(2200L);
+            this.toggleAnimationMetanoise.setEasing(Easing.CIRC_OUT);
+            if (this.toggleAnimationMetanoise.getValue() == 0.0F) {
+                this.target = null;
+            }
+        } else {
+            this.target = target;
+            this.toggleAnimationMetanoise.update(1.0F);
+            this.toggleAnimationMetanoise.setDuration(1300L);
+            this.toggleAnimationMetanoise.setEasing(Easing.CIRC_OUT);
+            this.toggleAnimation.update(1.0F);
         }
     }
 }

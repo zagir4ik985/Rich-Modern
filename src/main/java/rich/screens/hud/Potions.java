@@ -1,397 +1,245 @@
 package rich.screens.hud;
 
-import net.minecraft.client.gl.RenderPipelines;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.screen.ChatScreen;
+import net.minecraft.client.resource.language.I18n;
 import net.minecraft.entity.effect.StatusEffect;
 import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.registry.RegistryKey;
-import net.minecraft.registry.entry.RegistryEntry;
+import net.minecraft.text.Text;
 import net.minecraft.util.Identifier;
-import rich.client.draggables.AbstractHudElement;
-import rich.util.animations.Direction;
-import rich.util.render.Render2D;
-import rich.util.render.shader.Scissor;
+import rich.modules.module.setting.implement.BooleanSetting;
+import rich.screens.hud.port.Animation;
+import rich.screens.hud.port.BorderRadius;
+import rich.screens.hud.port.ColorRGBA;
+import rich.screens.hud.port.CustomDrawContext;
+import rich.screens.hud.port.DrawUtil;
+import rich.screens.hud.port.Easing;
+import rich.screens.hud.port.PortHudElement;
+import rich.screens.hud.port.Theme;
 import rich.util.render.font.Fonts;
 
-import java.awt.*;
-import java.util.*;
+import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.stream.Collectors;
 
-public class Potions extends AbstractHudElement {
+public class Potions extends PortHudElement {
 
-    private List<StatusEffectInstance> effectsList = new ArrayList<>();
-    private Map<String, Float> effectAnimations = new LinkedHashMap<>();
-    private Map<String, StatusEffectInstance> cachedEffects = new LinkedHashMap<>();
-    private Set<String> activeEffectIds = new HashSet<>();
+    private final BooleanSetting s1 = new BooleanSetting("1", "Показ списка зелий");
+    private final BooleanSetting s2 = new BooleanSetting("2", "Фон элемента");
+    private final BooleanSetting s3 = new BooleanSetting("3", "Разделитель");
+    private final BooleanSetting s4 = new BooleanSetting("4", "Иконка эффекта");
+    private final BooleanSetting s5 = new BooleanSetting("5", "Название эффекта");
+    private final BooleanSetting s6 = new BooleanSetting("6", "Уровень эффекта");
+    private final BooleanSetting s7 = new BooleanSetting("7", "Таймер эффекта");
+    private final Animation widthAnimation;
+    private final Animation xLine;
+    private final Animation alpha;
+    private final List<PotionItem> potionItems;
 
-    private float animatedWidth = 80;
-    private float animatedHeight = 23;
-    private long lastUpdateTime = System.currentTimeMillis();
-
-    private long lastEffectChange = 0;
-    private String currentRandomEffect = "speed";
-
-    private static final List<String> RANDOM_EFFECTS = List.of(
-            "speed", "slowness", "haste", "mining_fatigue", "strength",
-            "jump_boost", "regeneration", "resistance", "fire_resistance",
-            "water_breathing", "invisibility", "night_vision", "hunger",
-            "weakness", "poison", "wither", "health_boost", "absorption"
-    );
-
-    private static final float ANIMATION_SPEED = 8.0f;
-    private static final float ICON_SIZE = 9f;
-    private static final int BLINK_THRESHOLD_TICKS = 100;
+    private static final float blurStrength = 15.0f;
+    private static final float cornerRadius = 2.25f;
 
     public Potions() {
-        super("Potions", 300, 100, 80, 23, true);
-        stopAnimation();
+        super("Potions", 200, 40, 75, 30, true);
+        this.widthAnimation = new Animation(200L, Easing.CUBIC_OUT);
+        this.xLine = new Animation(170L, Easing.SINE_OUT);
+        this.alpha = new Animation(200L, Easing.CUBIC_OUT);
+        this.potionItems = new CopyOnWriteArrayList<>();
+    }
+
+    private void drawBlurBackground(CustomDrawContext ctx, float x, float y, float width, float height, Theme theme, float animation) {
+        DrawUtil.drawBlur(
+                ctx.getMatrices(), x, y, width, height,
+                blurStrength,
+                BorderRadius.all(cornerRadius),
+                new ColorRGBA(255, 255, 255, (int) (animation * 255))
+        );
+
+        ColorRGBA themeColor = theme.getColor();
+        ColorRGBA backgroundColor = new ColorRGBA(
+                (int) (Math.min(255, Math.max(0, themeColor.getRed() * 0.15f))),
+                (int) (Math.min(255, Math.max(0, themeColor.getGreen() * 0.15f))),
+                (int) (Math.min(255, Math.max(0, themeColor.getBlue() * 0.15f))),
+                (int) (64 * animation)
+        );
+
+        DrawUtil.drawRoundedRect(
+                ctx.getMatrices(), x, y, width, height,
+                BorderRadius.all(cornerRadius),
+                backgroundColor
+        );
     }
 
     @Override
-    public boolean visible() {
-        return !scaleAnimation.isFinished(Direction.BACKWARDS);
-    }
+    public void renderPort(CustomDrawContext ctx, int alpha) {
+        if (mc.player != null) {
+            this.updatePotions();
+            float posX = this.getPx();
+            float posY = this.getPy();
+            float defaultWidth = 75.0F;
+            float height = 14.5F;
+            this.potionItems.sort(Comparator.comparing((pi) -> pi.name));
+            boolean isFound = false;
+            float durationWidth = 0.0F;
+            Iterator<PotionItem> var8 = this.potionItems.iterator();
 
-    @Override
-    public void tick() {
-        if (mc.player == null) {
-            effectsList = new ArrayList<>();
-            activeEffectIds.clear();
-            stopAnimation();
-            return;
-        }
-
-        Collection<StatusEffectInstance> effects = mc.player.getStatusEffects();
-        effectsList = new ArrayList<>(effects.stream()
-                .filter(StatusEffectInstance::shouldShowIcon)
-                .toList());
-
-        activeEffectIds.clear();
-        for (StatusEffectInstance effect : effectsList) {
-            String id = getEffectId(effect);
-            activeEffectIds.add(id);
-            cachedEffects.put(id, effect);
-            if (!effectAnimations.containsKey(id)) {
-                effectAnimations.put(id, 0f);
+            String duration;
+            while (var8.hasNext()) {
+                PotionItem item = var8.next();
+                item.animation.update(item.active ? 1.0F : 0.0F);
+                if (item.animation.getValue() != 0.0F) {
+                    int seconds = item.durationTicks / 20;
+                    int minutes = seconds / 60;
+                    int sec = seconds % 60;
+                    duration = String.format("%d:%02d", minutes, sec);
+                    durationWidth = Fonts.SEMIBOLD.getWidth(duration, 6.75F) + 4.0F;
+                    height += 11.0F * item.animation.getValue();
+                    if (item.animation.getValue() != 0.0F) {
+                        this.alpha.update(1.0F);
+                        isFound = true;
+                    }
+                }
             }
-        }
 
-        boolean hasActiveEffects = !activeEffectIds.isEmpty() || !effectAnimations.isEmpty();
-        boolean inChat = isChat(mc.currentScreen);
-
-        if (hasActiveEffects || inChat) {
-            startAnimation();
-        } else {
-            stopAnimation();
-        }
-
-        if (effectsList.isEmpty() && inChat) {
-            long currentTime = System.currentTimeMillis();
-            if (currentTime - lastEffectChange >= 1000) {
-                currentRandomEffect = RANDOM_EFFECTS.get(new Random().nextInt(RANDOM_EFFECTS.size()));
-                lastEffectChange = currentTime;
+            this.xLine.update(durationWidth);
+            if (!isFound && !(mc.currentScreen instanceof ChatScreen)) {
+                this.alpha.update(0.0F);
             }
+
+            if (mc.currentScreen instanceof ChatScreen) {
+                this.alpha.update(1.0F);
+            }
+
+            Theme theme = new Theme();
+
+            drawBlurBackground(ctx, posX, posY, this.widthAnimation.getValue(), 14.5F, theme, this.alpha.getValue());
+
+            ctx.drawText(Fonts.NURIKI, "E", posX + 4F, posY + 5.5F, 9F, theme.getColor().withAlpha(255.0F * this.alpha.getValue()));
+
+            ctx.drawText(Fonts.SEMIBOLD, ":", posX + 15.25F, posY + 4F, 8.3F, new ColorRGBA(166, 166, 166, 255.0F * this.alpha.getValue()));
+
+            ctx.drawText(Fonts.SEMIBOLD, "Active potions", posX + 18.5F, posY + 4.75F, 7.5F, (new ColorRGBA(-1)).withAlpha(255.0F * this.alpha.getValue()));
+            posY += 14.5F + 1.0F;
+            if (this.s1.isValue()) {
+                Iterator<PotionItem> var17 = this.potionItems.iterator();
+
+                while (var17.hasNext()) {
+                    PotionItem item = var17.next();
+                    if (item.animation.getValue() != 0.0F) {
+                        String name = I18n.translate(item.name, new Object[0]);
+                        String amp = this.getAmplifierText(item.amplifier);
+                        duration = this.formatDuration(item.durationTicks);
+                        Identifier icon = this.getEffectIcon(item.effect.getEffectType().value());
+                        height += 11.0F + 1.0F;
+                        float elementsWidth = Fonts.SEMIBOLD.getWidth(name, 7.0F) + Fonts.SEMIBOLD.getWidth(amp, 6.75F) + Fonts.SEMIBOLD.getWidth(duration, 6.75F) + 35.0F;
+
+                        float elementAlpha = item.animation.getValue() * this.alpha.getValue();
+                        float elementY = posY + item.animation.getValue() * 3.0F - 3.0F;
+
+                        if (this.s2.isValue()) {
+                            drawBlurBackground(ctx, posX, elementY, this.widthAnimation.getValue(), 11.0F, theme, elementAlpha);
+                        }
+
+                        if (this.s5.isValue()) {
+                            ctx.drawText(Fonts.SEMIBOLD, name, posX + 5.0F, elementY + 3.25F, 7.0F, (new ColorRGBA(-1)).withAlpha(elementAlpha * 255.0F));
+                        }
+
+                        if (Integer.parseInt(amp) > 0 && this.s6.isValue()) {
+                            ctx.drawText(Fonts.SEMIBOLD, "   " + amp, posX + Fonts.SEMIBOLD.getWidth(name, 7.0F) + 5.0F, elementY + 3.25F, 6.75F, theme.getColor().withAlpha(elementAlpha * 255.0F));
+                        }
+
+                        if (this.s7.isValue()) {
+                            float timerX = posX + this.widthAnimation.getValue() - 18.0F - Fonts.SEMIBOLD.getWidth(duration, 6.75F);
+                            ctx.drawText(Fonts.SEMIBOLD, duration, timerX, elementY + 3.25F, 6.5F, (new ColorRGBA(-1)).withAlpha(elementAlpha * 255.0F));
+                        }
+
+                        if (this.s3.isValue()) {
+                            float separatorX = posX + this.widthAnimation.getValue() - 12.0F;
+                            ctx.drawText(Fonts.SEMIBOLD, ":", separatorX, elementY + 3.25F, 6.5F, new ColorRGBA(166, 166, 166, 255.0F * elementAlpha));
+                        }
+
+                        if (this.s4.isValue()) {
+                            ctx.drawTexture(icon, posX + this.widthAnimation.getValue() - 9.0F, elementY + 2.25F, 6.25F, 6.25F, ColorRGBA.WHITE.withAlpha(elementAlpha * 255.0F));
+                        }
+
+                        if (elementsWidth > defaultWidth) {
+                            defaultWidth = elementsWidth;
+                        }
+
+                        posY += (11.0F + 1.0F) * item.animation.getValue();
+                    }
+                }
+            }
+
+            this.widthAnimation.update(defaultWidth);
+            this.pw = this.widthAnimation.getValue();
+            this.ph = height;
+            this.width = (int) this.pw;
+            this.height = (int) this.ph;
         }
     }
 
-    private String getEffectId(StatusEffectInstance effect) {
-        return effect.getEffectType().getKey()
-                .map(key -> key.getValue().toString())
-                .orElse("unknown_" + effect.hashCode());
+    private String getAmplifierText(int amplifier) {
+        return String.valueOf(amplifier + 1);
     }
 
-    private float lerp(float current, float target, float deltaTime) {
-        float factor = (float) (1.0 - Math.pow(0.001, deltaTime * ANIMATION_SPEED));
-        return current + (target - current) * factor;
-    }
-
-    private String formatDuration(int ticks) {
-        if (ticks == -1) {
-            return "∞∞:∞∞";
-        }
-        int totalSeconds = ticks / 20;
+    private String formatDuration(int durationTicks) {
+        int totalSeconds = durationTicks / 20;
         int minutes = totalSeconds / 60;
         int seconds = totalSeconds % 60;
-        return String.format("%02d:%02d", minutes, seconds);
+        return String.format("%d:%02d", minutes, seconds);
     }
 
-    private String getEffectName(StatusEffectInstance effect) {
-        return effect.getEffectType().value().getName().getString();
+    private Identifier getEffectIcon(StatusEffect effect) {
+        String id = effect.getTranslationKey().replace("effect.minecraft.", "").replace("effect.", "");
+        return Identifier.of("minecraft", "textures/mob_effect/" + id + ".png");
     }
 
-    private String getLevelText(int amplifier) {
-        if (amplifier <= 0) {
-            return "";
-        }
-        return "LVL " + (amplifier + 1);
-    }
+    public void updatePotions() {
+        if (mc.player != null) {
+            Map<String, StatusEffectInstance> currentEffects = mc.player.getStatusEffects().stream().collect(Collectors.toMap((e) -> {
+                String var10000 = Text.translatable(e.getTranslationKey()).getString();
+                return var10000 + ":" + e.getAmplifier();
+            }, (e) -> e, (e1, e2) -> e1));
+            this.potionItems.forEach((item) -> {
+                String key = item.name + ":" + item.amplifier;
+                StatusEffectInstance effect = currentEffects.get(key);
+                if (effect != null) {
+                    item.durationTicks = effect.getDuration();
+                    if (!item.active) {
+                        item.animation.setValue(1.0F);
+                    }
 
-    private float getFullNameWidth(StatusEffectInstance effect) {
-        String name = getEffectName(effect);
-        int amplifier = effect.getAmplifier();
-        float nameWidth = Fonts.BOLD.getWidth(name, 6);
-        if (amplifier > 0) {
-            String levelText = getLevelText(amplifier);
-            float levelWidth = Fonts.REGULAR.getWidth(levelText, 6);
-            return nameWidth + 3 + levelWidth;
-        }
-        return nameWidth;
-    }
-
-    private Identifier getEffectTexture(RegistryEntry<StatusEffect> effect) {
-        return effect.getKey()
-                .map(RegistryKey::getValue)
-                .map(id -> id.withPrefixedPath("mob_effect/"))
-                .orElse(Identifier.ofVanilla("mob_effect/speed"));
-    }
-
-    private Identifier getRandomEffectTexture() {
-        return Identifier.ofVanilla("mob_effect/" + currentRandomEffect);
-    }
-
-    private int getBlinkAlpha(int duration, int baseAlpha) {
-        if (duration == -1 || duration > BLINK_THRESHOLD_TICKS) {
-            return baseAlpha;
-        }
-
-        long currentTime = System.currentTimeMillis();
-        double blinkSpeed = 0.008;
-        double blinkWave = Math.sin(currentTime * blinkSpeed);
-        float blinkFactor = (float) ((blinkWave + 1.0) / 2.0);
-
-        int minAlpha = Math.max(50, baseAlpha - 150);
-        return (int) (minAlpha + (baseAlpha - minAlpha) * (1.0f - blinkFactor));
-    }
-
-    @Override
-    public void drawDraggable(DrawContext context, int alpha) {
-        if (alpha <= 0) return;
-
-        float alphaFactor = alpha / 255.0f;
-
-        long currentTime = System.currentTimeMillis();
-        float deltaTime = (currentTime - lastUpdateTime) / 1000.0f;
-        lastUpdateTime = currentTime;
-        deltaTime = Math.min(deltaTime, 0.1f);
-
-        List<String> toRemove = new ArrayList<>();
-        for (Map.Entry<String, Float> entry : effectAnimations.entrySet()) {
-            String id = entry.getKey();
-            float currentAnim = entry.getValue();
-            float targetAnim = activeEffectIds.contains(id) ? 1f : 0f;
-            float newAnim = lerp(currentAnim, targetAnim, deltaTime);
-
-            if (Math.abs(newAnim - targetAnim) < 0.01f) {
-                newAnim = targetAnim;
-            }
-
-            if (newAnim <= 0.01f && targetAnim == 0f) {
-                toRemove.add(id);
-            } else {
-                effectAnimations.put(id, newAnim);
-            }
-        }
-        for (String id : toRemove) {
-            effectAnimations.remove(id);
-            cachedEffects.remove(id);
-        }
-
-        float x = getX();
-        float y = getY();
-
-        boolean hasAnimatingEffects = !effectAnimations.isEmpty();
-        boolean showExample = !hasAnimatingEffects && isChat(mc.currentScreen);
-
-        int offset = 23;
-        float targetWidth = 80;
-
-        String exampleTimer = "00:00";
-
-        if (showExample) {
-            offset += 11;
-            String name = "Example Effect";
-            String levelText = "LVL";
-            float timerWidth = Fonts.BOLD.getWidth(exampleTimer, 6);
-            float nameWidth = Fonts.BOLD.getWidth(name, 6);
-            float levelWidth = Fonts.REGULAR.getWidth(levelText, 6);
-            targetWidth = Math.max(nameWidth + 3 + levelWidth + timerWidth + 60, targetWidth);
-        } else if (hasAnimatingEffects) {
-            for (Map.Entry<String, Float> entry : effectAnimations.entrySet()) {
-                String id = entry.getKey();
-                float animation = entry.getValue();
-                if (animation <= 0) continue;
-
-                StatusEffectInstance effect = cachedEffects.get(id);
-                if (effect == null) continue;
-
-                offset += (int) (animation * 11);
-
-                String timer = "" + formatDuration(effect.getDuration()) + "";
-                float timerWidth = Fonts.BOLD.getWidth(timer, 6);
-                float fullNameWidth = getFullNameWidth(effect);
-                targetWidth = Math.max(fullNameWidth + timerWidth + 60, targetWidth);
-            }
-        }
-
-        float targetHeight = offset + 2;
-
-        animatedWidth = lerp(animatedWidth, targetWidth, deltaTime);
-        animatedHeight = lerp(animatedHeight, targetHeight, deltaTime);
-
-        if (Math.abs(animatedWidth - targetWidth) < 0.3f) {
-            animatedWidth = targetWidth;
-        }
-        if (Math.abs(animatedHeight - targetHeight) < 0.3f) {
-            animatedHeight = targetHeight;
-        }
-
-        setWidth((int) Math.ceil(animatedWidth));
-        setHeight((int) Math.ceil(animatedHeight));
-
-        float contentHeight = animatedHeight;
-        int bgAlpha = (int) (255 * alphaFactor);
-
-        if (contentHeight > 0) {
-            Render2D.gradientRect(x, y, getWidth(), contentHeight,
-                    new int[]{
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(32, 32, 32, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(32, 32, 32, bgAlpha).getRGB()
-                    },
-                    5);
-            Render2D.outline(x, y, getWidth(), contentHeight, 0.35f, new Color(90, 90, 90, bgAlpha).getRGB(), 5);
-        }
-
-        Scissor.enable(x, y, getWidth(), contentHeight, 2);
-
-        int effectsCount = activeEffectIds.isEmpty() ? 1 : activeEffectIds.size();
-        String countText = String.valueOf(effectsCount);
-        float countTextWidth = Fonts.BOLD.getWidth(countText, 6);
-        float potionsTextWidth = Fonts.BOLD.getWidth("Potions", 6);
-
-        Render2D.gradientRect(x + getWidth() - countTextWidth - potionsTextWidth + 3, y + 5, 14, 12,
-                new int[]{
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(52, 52, 52, bgAlpha).getRGB(),
-                        new Color(52, 52, 52, bgAlpha).getRGB()
-                },
-                3);
-
-        Fonts.HUD_ICONS.draw("f", x + getWidth() - countTextWidth - potionsTextWidth + 5, y + 6, 10, new Color(165, 165, 165, bgAlpha).getRGB());
-
-        Fonts.BOLD.draw("Potions", x + 8, y + 6.5f, 6, new Color(255, 255, 255, bgAlpha).getRGB());
-
-        int moduleOffset = 23;
-
-        if (showExample) {
-            String name = "Example Effect";
-            String levelText = "LVL";
-            String timer = "00:00";
-
-            float timerWidth = Fonts.BOLD.getWidth(timer, 6);
-            float timerBoxX = x + getWidth() - timerWidth - 11.5f;
-
-            Render2D.gradientRect(timerBoxX, y + moduleOffset - 2f, timerWidth + 4, 9,
-                    new int[]{
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB(),
-                            new Color(52, 52, 52, bgAlpha).getRGB()
-                    },
-                    3);
-
-            Render2D.outline(timerBoxX, y + moduleOffset - 2f, timerWidth + 4, 9, 0.05f,
-                    new Color(132, 132, 132, bgAlpha).getRGB(), 2);
-
-            Identifier randomTexture = getRandomEffectTexture();
-            float scale = ICON_SIZE / 18f;
-            float iconX = x + 8;
-            float iconY = y + moduleOffset - 2.5f;
-
-            context.getMatrices().pushMatrix();
-            context.getMatrices().translate(iconX, iconY);
-            context.getMatrices().scale(scale, scale);
-            context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, randomTexture, 0, 0, 18, 18);
-            context.getMatrices().popMatrix();
-
-            float nameX = x + 20;
-            Fonts.BOLD.draw(name, nameX, y + moduleOffset - 1.5f, 6,
-                    new Color(255, 255, 255, bgAlpha).getRGB());
-
-            float nameWidth = Fonts.BOLD.getWidth(name, 6);
-
-            Fonts.TEST.draw(levelText, nameX + nameWidth + 2, y + moduleOffset - 0.5f, 5,
-                    new Color(155, 155, 155, bgAlpha).getRGB());
-
-            Fonts.BOLD.draw(timer, timerBoxX + 2, y + moduleOffset - 1, 6,
-                    new Color(165, 165, 165, bgAlpha).getRGB());
-        } else if (hasAnimatingEffects) {
-            for (Map.Entry<String, Float> entry : effectAnimations.entrySet()) {
-                String id = entry.getKey();
-                float animation = entry.getValue();
-                if (animation <= 0) continue;
-
-                StatusEffectInstance effect = cachedEffects.get(id);
-                if (effect == null) continue;
-
-                String name = getEffectName(effect);
-                int amplifier = effect.getAmplifier();
-                String levelText = getLevelText(amplifier);
-                String timer = "" + formatDuration(effect.getDuration()) + "";
-
-                int duration = effect.getDuration();
-
-                float timerWidth = Fonts.BOLD.getWidth(timer, 6);
-
-                int baseAlpha = (int) (255 * animation * alphaFactor);
-                int blinkAlpha = getBlinkAlpha(duration, baseAlpha);
-
-                int textColor = new Color(255, 255, 255, blinkAlpha).getRGB();
-                int levelColor = new Color(155, 155, 155, blinkAlpha).getRGB();
-                int timerColor = new Color(165, 165, 165, blinkAlpha).getRGB();
-
-                float timerBoxX = x + getWidth() - timerWidth - 11.5f;
-
-                Render2D.gradientRect(timerBoxX, y + moduleOffset - 2f, timerWidth + 4, 9,
-                        new int[]{
-                                new Color(52, 52, 52, blinkAlpha).getRGB(),
-                                new Color(52, 52, 52, blinkAlpha).getRGB(),
-                                new Color(52, 52, 52, blinkAlpha).getRGB(),
-                                new Color(52, 52, 52, blinkAlpha).getRGB()
-                        },
-                        3);
-
-                Render2D.outline(timerBoxX, y + moduleOffset - 2f, timerWidth + 4, 9, 0.05f,
-                        new Color(132, 132, 132, blinkAlpha).getRGB(), 2);
-
-                Identifier effectTexture = getEffectTexture(effect.getEffectType());
-                float scale = ICON_SIZE / 18f;
-                float iconX = x + 8;
-                float iconY = y + moduleOffset - 2.5f;
-
-                context.getMatrices().pushMatrix();
-                context.getMatrices().translate(iconX, iconY);
-                context.getMatrices().scale(scale, scale);
-                int iconColor = new Color(255, 255, 255, blinkAlpha).getRGB();
-                context.drawGuiTexture(RenderPipelines.GUI_TEXTURED, effectTexture, 0, 0, 18, 18, iconColor);
-                context.getMatrices().popMatrix();
-
-                float nameX = x + 20;
-                Fonts.BOLD.draw(name, nameX, y + moduleOffset - 1.5f, 6, textColor);
-
-                if (amplifier > 0) {
-                    float nameWidth = Fonts.BOLD.getWidth(name, 6);
-                    Fonts.TEST.draw(levelText, nameX + nameWidth + 2, y + moduleOffset - 0.5f, 5, levelColor);
+                    item.active = true;
+                    currentEffects.remove(key);
+                } else {
+                    item.active = false;
                 }
-
-                Fonts.BOLD.draw(timer, timerBoxX + 2, y + moduleOffset - 1, 6, timerColor);
-
-                moduleOffset += (int) (animation * 11);
-            }
+            });
+            currentEffects.forEach((key, effect) -> {
+                this.potionItems.add(new PotionItem(Text.translatable(effect.getTranslationKey()).getString(), effect.getAmplifier(), effect.getDuration(), effect));
+            });
+            this.potionItems.removeIf((item) -> !item.active && item.animation.getValue() == 0.0F);
         }
+    }
 
-        Scissor.disable();
+    private static class PotionItem {
+        String name;
+        int amplifier;
+        int durationTicks;
+        boolean active;
+        StatusEffectInstance effect;
+        Animation animation;
+
+        PotionItem(String name, int amplifier, int durationTicks, StatusEffectInstance effect) {
+            this.animation = new Animation(250L, Easing.CUBIC_OUT);
+            this.name = name;
+            this.amplifier = amplifier;
+            this.durationTicks = durationTicks;
+            this.active = true;
+            this.effect = effect;
+        }
     }
 }

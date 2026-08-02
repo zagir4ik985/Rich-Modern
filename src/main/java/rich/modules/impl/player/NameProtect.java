@@ -22,6 +22,10 @@ public class NameProtect extends ModuleStructure {
         settings(friendsSetting);
     }
 
+    public String getCustomName() {
+        return nameSetting.getText();
+    }
+
     @EventHandler
     @Native(type = Native.Type.VMProtectBeginUltra)
     public void onTextFactory(TextFactoryEvent e) {

@@ -20,6 +20,12 @@ public class Fonts {
     public static final Font INTER = register("inter", "inter");
     public static final Font REGULARNEW = register("regularnew", "regularnew");
     public static final Font MAINMENUSCREEN = register("mainmenuicons", "mainmenuicons");
+    public static final Font NURIKI = register("nuriki", "nuriki");
+    public static final Font NURSULTANIK = register("nursultanik", "nursultanik");
+
+    public static final Font SEMIBOLD = BOLD;
+    public static final Font MEDIUM = REGULAR;
+    public static final Font ICONS2 = ICONS;
 
     private static Font register(String name, String path) {
         FONT_REGISTRY.put(name, path);

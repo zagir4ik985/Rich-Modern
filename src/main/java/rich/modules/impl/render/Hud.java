@@ -18,10 +18,10 @@ public class Hud extends ModuleStructure {
                     "HotKeys",
                     "Potions",
                     "Staff",
-                    "test",
+                    "HootBar",
                     "TargetHud",
-//                    "CoolDowns",
-//                    "Inventory",
+                    "CoolDowns",
+                    "Inventory",
                     "Info",
                     "Notifications")
 
@@ -29,9 +29,8 @@ public class Hud extends ModuleStructure {
                     "HotKeys",
                     "Potions",
                     "Staff",
+                    "HootBar",
                     "TargetHud",
-//                    "CoolDowns",
-//                    "Inventory",
                     "Info",
                     "Notifications");
 
@@ -43,8 +42,11 @@ public class Hud extends ModuleStructure {
             .setValue(true)
             .visible(() -> interfaceSettings.isSelected("Watermark"));
 
+    public ColorSetting color = new ColorSetting("Цвет акцента", "Цвет акцента элементов интерфейса")
+            .value(0xFF5FA5FF);
+
     public Hud() {
         super("Hud", ModuleCategory.RENDER);
-        settings(interfaceSettings, showBps, showTps);
+        settings(interfaceSettings, showBps, showTps, color);
     }
 }
