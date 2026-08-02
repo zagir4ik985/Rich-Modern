@@ -21,6 +21,7 @@ import rich.events.api.EventManager;
 import rich.events.api.types.EventType;
 import rich.events.impl.*;
 import rich.modules.impl.combat.aura.AngleConnection;
+import rich.modules.impl.player.NoDelay;
 import rich.util.move.MoveUtil;
 
 import static rich.IMinecraft.mc;
@@ -53,6 +54,15 @@ public abstract class ClientPlayerEntityMixin extends AbstractClientPlayerEntity
     public void tick(CallbackInfo info) {
         if (client.player != null && client.world != null) {
             EventManager.callEvent(new TickEvent());
+        }
+    }
+
+    @Inject(method = "tick", at = @At("TAIL"))
+    public void tickTail(CallbackInfo info) {
+        if (client.player == null) return;
+        NoDelay noDelay = NoDelay.getInstance();
+        if (noDelay != null && noDelay.isState() && noDelay.ignoreSetting.isSelected("Прыжок")) {
+            client.player.jumpingCooldown = 0;
         }
     }
 

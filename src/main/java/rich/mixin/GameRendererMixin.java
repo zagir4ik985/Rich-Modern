@@ -113,13 +113,6 @@ public abstract class GameRendererMixin {
         worldSpaceStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(camera.getYaw() + 180.0F));
 
         Render3D.lastProjMat.set(client.gameRenderer.getBasicProjectionMatrix(getFov(camera, tickDelta, true)));
-        Render3D.lastModMat.set(RenderSystem.getModelViewMatrix());
-        Render3D.lastWorldSpaceMatrix.set(worldSpaceStack.peek().getPositionMatrix());
-
-        Render3D.setLastWorldSpaceEntry(matrixStack.peek());
-        Render3D.setLastTickDelta(tickDelta);
-        Render3D.setLastCameraPos(camera.getCameraPos());
-        Render3D.setLastCameraRotation(new Quaternionf(camera.getRotation()));
 
         Matrix4fStack modelViewStack = RenderSystem.getModelViewStack();
         modelViewStack.pushMatrix().mul(view);
@@ -131,6 +124,14 @@ public abstract class GameRendererMixin {
         }
         modelViewStack.mul(matrices.peek().getPositionMatrix().invert(new Matrix4f()));
         matrices.pop();
+
+        Render3D.lastModMat.set(RenderSystem.getModelViewMatrix());
+        Render3D.lastWorldSpaceMatrix.set(worldSpaceStack.peek().getPositionMatrix());
+
+        Render3D.setLastWorldSpaceEntry(matrixStack.peek());
+        Render3D.setLastTickDelta(tickDelta);
+        Render3D.setLastCameraPos(camera.getCameraPos());
+        Render3D.setLastCameraRotation(new Quaternionf(camera.getRotation()));
 
         WorldRenderEvent event = new WorldRenderEvent(matrixStack, tickDelta);
         EventManager.callEvent(event);
