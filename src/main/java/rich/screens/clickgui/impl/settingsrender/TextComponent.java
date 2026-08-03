@@ -3,6 +3,7 @@ package rich.screens.clickgui.impl.settingsrender;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.glfw.GLFW;
 import rich.modules.module.setting.implement.TextSetting;
+import rich.screens.clickgui.ClickGui;
 import rich.util.interfaces.AbstractSettingComponent;
 import rich.util.render.Render2D;
 import rich.util.render.shader.Scissor;
@@ -127,7 +128,7 @@ public class TextComponent extends AbstractSettingComponent {
 
         textScrollOffset = lerp(textScrollOffset, targetScrollOffset, deltaTime * SCROLL_ANIMATION_SPEED);
 
-        Scissor.enable(boxX + 2, boxY, INPUT_BOX_WIDTH - 4, INPUT_BOX_HEIGHT,3.6f);
+        Scissor.enable(boxX + 2, boxY, INPUT_BOX_WIDTH - 4, INPUT_BOX_HEIGHT, ClickGui.CURRENT_GUI_SCALE);
 
         if (text.isEmpty() && !focused) {
             Fonts.BOLD.draw("Enter text...", textAreaX, textY, 5, applyAlpha(new Color(100, 100, 105, 100)).getRGB());

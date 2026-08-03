@@ -1,6 +1,7 @@
 package rich.screens.clickgui.impl.configs.render;
 
 import net.minecraft.client.gui.DrawContext;
+import rich.screens.clickgui.ClickGui;
 import rich.screens.clickgui.impl.configs.ConfigsRenderer;
 import rich.screens.clickgui.impl.configs.handler.ConfigAnimationHandler;
 import rich.screens.clickgui.impl.configs.handler.ConfigDataHandler;
@@ -42,7 +43,7 @@ public class ConfigListRenderer {
         dataHandler.updateScroll(0.016f);
         dataHandler.updateScrollFades(listH);
 
-        Scissor.enable(listX, listY - 8, listW, listH + 15, 3.6f);
+        Scissor.enable(listX, listY - 8, listW, listH + 15, ClickGui.CURRENT_GUI_SCALE);
 
         float itemY = listY + (float) dataHandler.getScrollOffset();
 

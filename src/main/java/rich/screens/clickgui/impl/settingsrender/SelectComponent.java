@@ -2,6 +2,7 @@ package rich.screens.clickgui.impl.settingsrender;
 
 import net.minecraft.client.gui.DrawContext;
 import rich.modules.module.setting.implement.SelectSetting;
+import rich.screens.clickgui.ClickGui;
 import rich.util.interfaces.AbstractSettingComponent;
 import rich.util.render.Render2D;
 import rich.util.render.shader.Scissor;
@@ -171,7 +172,7 @@ public class SelectComponent extends AbstractSettingComponent {
         float maxTextWidth = BOX_WIDTH - 14;
         float textY = boxY + boxHeight / 2 - 2.5f;
 
-        Scissor.enable(boxX + 2, boxY, maxTextWidth + 2, boxHeight,3.6f);
+        Scissor.enable(boxX + 2, boxY, maxTextWidth + 2, boxHeight, ClickGui.CURRENT_GUI_SCALE);
 
         if (isAnimatingSelection) {
             if (selectedTextAlpha > 0.01f) {
@@ -223,7 +224,7 @@ public class SelectComponent extends AbstractSettingComponent {
             float maxScroll = descWidth - availableWidth + 5;
             float currentScroll = descScrollOffset * maxScroll;
 
-            Scissor.enable(x, descY - 2, availableWidth, 10,3.6f);
+            Scissor.enable(x, descY - 2, availableWidth, 10, ClickGui.CURRENT_GUI_SCALE);
             Fonts.BOLD.draw(description, x + 0.5f - currentScroll, descY, 5, applyAlpha(new Color(128, 128, 128, 128)).getRGB());
             Scissor.disable();
         }
@@ -280,7 +281,7 @@ public class SelectComponent extends AbstractSettingComponent {
 
         if (visibleHeight < 1f) return;
 
-        Scissor.enable(boxX, startY, BOX_WIDTH, visibleHeight,3.6f);
+        Scissor.enable(boxX, startY, BOX_WIDTH, visibleHeight, ClickGui.CURRENT_GUI_SCALE);
 
         float optionY = startY;
 

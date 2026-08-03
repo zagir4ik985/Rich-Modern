@@ -1,6 +1,7 @@
 package rich.screens.clickgui.impl.background.render;
 
 import rich.modules.module.category.ModuleCategory;
+import rich.screens.clickgui.ClickGui;
 import rich.screens.clickgui.impl.background.search.SearchHandler;
 import rich.util.render.Render2D;
 import rich.util.render.shader.Scissor;
@@ -62,7 +63,7 @@ public class HeaderRenderer {
 
     private void renderSearchText(float searchBoxX, float searchBoxY, float searchBoxW, float searchBoxH,
                                   float textAreaX, SearchHandler searchHandler, float alphaMultiplier) {
-        Scissor.enable(searchBoxX + 3, searchBoxY, searchBoxW - 20, searchBoxH, 3.6f);
+        Scissor.enable(searchBoxX + 3, searchBoxY, searchBoxW - 20, searchBoxH, ClickGui.CURRENT_GUI_SCALE);
 
         if (searchHandler.hasSearchSelection() && searchHandler.getSearchSelectionAnimation() > 0.01f) {
             renderSearchSelection(textAreaX, searchBoxY, searchBoxH, searchHandler, alphaMultiplier);

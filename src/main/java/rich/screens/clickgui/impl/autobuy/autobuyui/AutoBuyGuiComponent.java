@@ -7,6 +7,7 @@ import net.minecraft.item.ItemStack;
 import org.joml.Matrix3x2fStack;
 import org.lwjgl.glfw.GLFW;
 import rich.IMinecraft;
+import rich.screens.clickgui.ClickGui;
 import rich.screens.clickgui.impl.autobuy.manager.AutoBuyManager;
 import rich.screens.clickgui.impl.autobuy.AutoBuyableItem;
 import rich.screens.clickgui.impl.autobuy.items.ItemRegistry;
@@ -226,7 +227,7 @@ public class AutoBuyGuiComponent implements IMinecraft {
         float clipW = width - 6;
         float clipH = height - 3;
 
-        Scissor.enable(clipX, clipY, clipW, clipH, FORCED_GUI_SCALE * 1.8f);
+        Scissor.enable(clipX, clipY, clipW, clipH, ClickGui.CURRENT_GUI_SCALE);
 
         float contentOffsetX = slideOffsetX;
         float contentAlpha = alphaMultiplier * slideAlpha;
@@ -261,10 +262,12 @@ public class AutoBuyGuiComponent implements IMinecraft {
 
         float scaleFactor = getScaleFactor();
 
-        int scissorX1 = (int) (clipX * scaleFactor * 1.8f);
-        int scissorY1 = (int) (clipY * scaleFactor * 1.8f);
-        int scissorX2 = (int) ((clipX + clipW) * scaleFactor * 1.8f);
-        int scissorY2 = (int) ((clipY + clipH) * scaleFactor * 1.8f);
+        float vToScaled = ClickGui.CURRENT_GUI_SCALE / (FORCED_GUI_SCALE * scaleFactor);
+
+        int scissorX1 = (int) (clipX * vToScaled);
+        int scissorY1 = (int) (clipY * vToScaled);
+        int scissorX2 = (int) ((clipX + clipW) * vToScaled);
+        int scissorY2 = (int) ((clipY + clipH) * vToScaled);
 
         context.enableScissor(scissorX1, scissorY1, scissorX2, scissorY2);
 

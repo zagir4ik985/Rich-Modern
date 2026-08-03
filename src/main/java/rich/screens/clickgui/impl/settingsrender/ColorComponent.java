@@ -3,6 +3,7 @@ package rich.screens.clickgui.impl.settingsrender;
 import net.minecraft.client.gui.DrawContext;
 import org.lwjgl.glfw.GLFW;
 import rich.modules.module.setting.implement.ColorSetting;
+import rich.screens.clickgui.ClickGui;
 import rich.util.interfaces.AbstractSettingComponent;
 import rich.util.render.Render2D;
 import rich.util.render.shader.Scissor;
@@ -347,7 +348,7 @@ public class ColorComponent extends AbstractSettingComponent {
 
         if (expandAnimation < 0.3f || contentAlpha < 0.01f) return;
 
-        Scissor.enable(pickerX, pickerY, pickerWidth, visibleHeight,3.6f);
+        Scissor.enable(pickerX, pickerY, pickerWidth, visibleHeight, ClickGui.CURRENT_GUI_SCALE);
 
         float contentX = pickerX + SPACING;
         float contentY = pickerY + SPACING;

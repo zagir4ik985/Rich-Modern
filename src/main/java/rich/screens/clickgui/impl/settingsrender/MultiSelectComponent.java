@@ -2,6 +2,7 @@ package rich.screens.clickgui.impl.settingsrender;
 
 import net.minecraft.client.gui.DrawContext;
 import rich.modules.module.setting.implement.MultiSelectSetting;
+import rich.screens.clickgui.ClickGui;
 import rich.util.interfaces.AbstractSettingComponent;
 import rich.util.render.Render2D;
 import rich.util.render.shader.Scissor;
@@ -261,7 +262,7 @@ public class MultiSelectComponent extends AbstractSettingComponent {
             float maxScroll = descWidth - availableWidth + 5;
             float currentScroll = descScrollOffset * maxScroll;
 
-            Scissor.enable(x, descY - 2, availableWidth, 10, 3.6f);
+            Scissor.enable(x, descY - 2, availableWidth, 10, ClickGui.CURRENT_GUI_SCALE);
             Fonts.BOLD.draw(description, x + 0.5f - currentScroll, descY, 5, applyAlpha(new Color(128, 128, 128, 128)).getRGB());
             Scissor.disable();
         }
@@ -307,7 +308,7 @@ public class MultiSelectComponent extends AbstractSettingComponent {
         float availableWidth = boxWidth - 4;
         float baseX = boxX + 4;
 
-        Scissor.enable(boxX + 1, boxY, availableWidth + 2, boxHeight,3.6f );
+        Scissor.enable(boxX + 1, boxY, availableWidth + 2, boxHeight, ClickGui.CURRENT_GUI_SCALE);
 
         if (noneAlphaAnimation > 0.01f) {
             int noneAlpha = (int)(200 * noneAlphaAnimation * alphaMultiplier);
@@ -423,7 +424,7 @@ public class MultiSelectComponent extends AbstractSettingComponent {
 
         if (visibleHeight < 1f) return;
 
-        Scissor.enable(boxX, startY, BOX_WIDTH, visibleHeight,3.6f);
+        Scissor.enable(boxX, startY, BOX_WIDTH, visibleHeight, ClickGui.CURRENT_GUI_SCALE);
 
         float optionY = startY;
 

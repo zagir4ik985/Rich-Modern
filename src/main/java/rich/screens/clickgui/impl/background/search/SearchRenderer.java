@@ -2,6 +2,7 @@ package rich.screens.clickgui.impl.background.search;
 
 import net.minecraft.client.gui.DrawContext;
 import rich.modules.module.ModuleStructure;
+import rich.screens.clickgui.ClickGui;
 import rich.util.render.Render2D;
 import rich.util.render.shader.Scissor;
 import rich.util.render.font.Fonts;
@@ -37,7 +38,7 @@ public class SearchRenderer {
             return;
         }
 
-        Scissor.enable(panelX + 3, panelY + 3, panelW - 6, panelH - 6, 3.6f);
+        Scissor.enable(panelX + 3, panelY + 3, panelW - 6, panelH - 6, ClickGui.CURRENT_GUI_SCALE);
         renderResults(panelX, panelY, panelW, panelH, mouseX, mouseY, resultAlpha);
         Scissor.disable();
 

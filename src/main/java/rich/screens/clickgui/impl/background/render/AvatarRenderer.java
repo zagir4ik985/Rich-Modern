@@ -2,6 +2,7 @@ package rich.screens.clickgui.impl.background.render;
 
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import rich.screens.clickgui.ClickGui;
 import rich.util.render.Render2D;
 import rich.util.render.shader.Scissor;
 import rich.util.render.font.Fonts;
@@ -12,7 +13,6 @@ import java.awt.*;
 
 public class AvatarRenderer {
 
-    private static final float FORCED_GUI_SCALE = 3.6f;
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
     public void render(DrawContext context, float bgX, float bgY, float alphaMultiplier) {
@@ -40,7 +40,7 @@ public class AvatarRenderer {
         float maxTextWidth = 35f;
         float textHeight = 14f;
 
-        Scissor.enable(textX, textY - 2, maxTextWidth, textHeight, FORCED_GUI_SCALE);
+        Scissor.enable(textX, textY - 2, maxTextWidth, textHeight, ClickGui.CURRENT_GUI_SCALE);
         Fonts.BOLD.draw(username, textX, textY, 6, new Color(255, 255, 255, alphaText).getRGB());
         Fonts.BOLD.draw("Uid: " + uid, textX, textY + 7, 5, new Color(255, 255, 255, alphaText).getRGB());
         Render2D.blur(textX, textY + 7, 1, 1, 0f, 0, alphaText);
