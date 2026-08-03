@@ -261,7 +261,7 @@ public class MultiSelectComponent extends AbstractSettingComponent {
             float maxScroll = descWidth - availableWidth + 5;
             float currentScroll = descScrollOffset * maxScroll;
 
-            Scissor.enable(x, descY - 2, availableWidth, 10, 2);
+            Scissor.enable(x, descY - 2, availableWidth, 10, 3.6f);
             Fonts.BOLD.draw(description, x + 0.5f - currentScroll, descY, 5, applyAlpha(new Color(128, 128, 128, 128)).getRGB());
             Scissor.disable();
         }
@@ -307,7 +307,7 @@ public class MultiSelectComponent extends AbstractSettingComponent {
         float availableWidth = boxWidth - 4;
         float baseX = boxX + 4;
 
-        Scissor.enable(boxX + 1, boxY, availableWidth + 2, boxHeight,2 );
+        Scissor.enable(boxX + 1, boxY, availableWidth + 2, boxHeight,3.6f );
 
         if (noneAlphaAnimation > 0.01f) {
             int noneAlpha = (int)(200 * noneAlphaAnimation * alphaMultiplier);
@@ -423,7 +423,7 @@ public class MultiSelectComponent extends AbstractSettingComponent {
 
         if (visibleHeight < 1f) return;
 
-        Scissor.enable(boxX, startY, BOX_WIDTH, visibleHeight,2);
+        Scissor.enable(boxX, startY, BOX_WIDTH, visibleHeight,3.6f);
 
         float optionY = startY;
 

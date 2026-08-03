@@ -171,7 +171,7 @@ public class SelectComponent extends AbstractSettingComponent {
         float maxTextWidth = BOX_WIDTH - 14;
         float textY = boxY + boxHeight / 2 - 2.5f;
 
-        Scissor.enable(boxX + 2, boxY, maxTextWidth + 2, boxHeight,2);
+        Scissor.enable(boxX + 2, boxY, maxTextWidth + 2, boxHeight,3.6f);
 
         if (isAnimatingSelection) {
             if (selectedTextAlpha > 0.01f) {
@@ -223,7 +223,7 @@ public class SelectComponent extends AbstractSettingComponent {
             float maxScroll = descWidth - availableWidth + 5;
             float currentScroll = descScrollOffset * maxScroll;
 
-            Scissor.enable(x, descY - 2, availableWidth, 10,2);
+            Scissor.enable(x, descY - 2, availableWidth, 10,3.6f);
             Fonts.BOLD.draw(description, x + 0.5f - currentScroll, descY, 5, applyAlpha(new Color(128, 128, 128, 128)).getRGB());
             Scissor.disable();
         }
@@ -280,7 +280,7 @@ public class SelectComponent extends AbstractSettingComponent {
 
         if (visibleHeight < 1f) return;
 
-        Scissor.enable(boxX, startY, BOX_WIDTH, visibleHeight,2);
+        Scissor.enable(boxX, startY, BOX_WIDTH, visibleHeight,3.6f);
 
         float optionY = startY;
 

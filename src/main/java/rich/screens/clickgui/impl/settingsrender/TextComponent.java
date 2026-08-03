@@ -127,7 +127,7 @@ public class TextComponent extends AbstractSettingComponent {
 
         textScrollOffset = lerp(textScrollOffset, targetScrollOffset, deltaTime * SCROLL_ANIMATION_SPEED);
 
-        Scissor.enable(boxX + 2, boxY, INPUT_BOX_WIDTH - 4, INPUT_BOX_HEIGHT,2);
+        Scissor.enable(boxX + 2, boxY, INPUT_BOX_WIDTH - 4, INPUT_BOX_HEIGHT,3.6f);
 
         if (text.isEmpty() && !focused) {
             Fonts.BOLD.draw("Enter text...", textAreaX, textY, 5, applyAlpha(new Color(100, 100, 105, 100)).getRGB());

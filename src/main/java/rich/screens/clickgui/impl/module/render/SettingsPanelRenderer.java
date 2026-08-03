@@ -31,7 +31,7 @@ public class SettingsPanelRenderer {
 
     public void render(DrawContext context, ModuleStructure selectedModule, List<AbstractSettingComponent> settingComponents,
                        float x, float y, float width, float height, float mouseX, float mouseY, float delta,
-                       int guiScale, float alphaMultiplier, ModuleScrollHandler scrollHandler, ModuleAnimationHandler animHandler) {
+                       float guiScale, float alphaMultiplier, ModuleScrollHandler scrollHandler, ModuleAnimationHandler animHandler) {
 
         animHandler.updateSettingAnimations(settingComponents);
         animHandler.updateVisibilityAnimations(settingComponents);

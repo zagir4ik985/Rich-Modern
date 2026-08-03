@@ -29,7 +29,7 @@ public class ConfigListRenderer {
     }
 
     public void render(DrawContext context, float x, float y, float mouseX, float mouseY,
-                       int guiScale, float alpha) {
+                       float guiScale, float alpha) {
         float listX = x + 8;
         float listY = y + 37;
         float listW = ConfigsRenderer.PANEL_WIDTH - 16;
@@ -42,7 +42,7 @@ public class ConfigListRenderer {
         dataHandler.updateScroll(0.016f);
         dataHandler.updateScrollFades(listH);
 
-        Scissor.enable(listX, listY - 8, listW, listH + 15, 2);
+        Scissor.enable(listX, listY - 8, listW, listH + 15, 3.6f);
 
         float itemY = listY + (float) dataHandler.getScrollOffset();
 

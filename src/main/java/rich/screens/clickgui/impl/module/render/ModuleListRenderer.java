@@ -39,7 +39,7 @@ public class ModuleListRenderer {
 
     public void render(DrawContext context, List<ModuleStructure> displayModules, ModuleStructure selectedModule,
                        ModuleStructure bindingModule, float x, float y, float width, float height,
-                       float mouseX, float mouseY, int guiScale, float alphaMultiplier,
+                       float mouseX, float mouseY, float guiScale, float alphaMultiplier,
                        ModuleAnimationHandler animHandler, ModuleScrollHandler scrollHandler) {
 
         int panelAlpha = (int) (15 * alphaMultiplier);

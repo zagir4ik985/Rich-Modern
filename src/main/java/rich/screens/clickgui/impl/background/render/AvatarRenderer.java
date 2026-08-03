@@ -12,7 +12,7 @@ import java.awt.*;
 
 public class AvatarRenderer {
 
-    private static final int FORCED_GUI_SCALE = 2;
+    private static final float FORCED_GUI_SCALE = 3.6f;
     private static final MinecraftClient mc = MinecraftClient.getInstance();
 
     public void render(DrawContext context, float bgX, float bgY, float alphaMultiplier) {

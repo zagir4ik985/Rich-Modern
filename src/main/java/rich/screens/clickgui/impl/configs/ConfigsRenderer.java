@@ -40,7 +40,7 @@ public class ConfigsRenderer {
     }
 
     public void render(DrawContext context, float bgX, float bgY, float mouseX, float mouseY,
-                       float delta, int guiScale, float alphaMultiplier, ModuleCategory category) {
+                       float delta, float guiScale, float alphaMultiplier, ModuleCategory category) {
 
 //        boolean shouldBeActive = category == ModuleCategory.CONFIGS;
 //

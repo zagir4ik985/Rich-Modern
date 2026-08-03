@@ -18,7 +18,7 @@ public class SearchRenderer {
     }
 
     public void render(DrawContext context, float bgX, float bgY, float bgWidth, float bgHeight,
-                       float mouseX, float mouseY, int guiScale, float alphaMultiplier) {
+                       float mouseX, float mouseY, float guiScale, float alphaMultiplier) {
 
         if (searchHandler.getSearchPanelAlpha() <= 0.01f) return;
 
@@ -37,7 +37,7 @@ public class SearchRenderer {
             return;
         }
 
-        Scissor.enable(panelX + 3, panelY + 3, panelW - 6, panelH - 6, 2);
+        Scissor.enable(panelX + 3, panelY + 3, panelW - 6, panelH - 6, 3.6f);
         renderResults(panelX, panelY, panelW, panelH, mouseX, mouseY, resultAlpha);
         Scissor.disable();
 

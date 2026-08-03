@@ -181,7 +181,7 @@ public class AutoBuyGuiComponent implements IMinecraft {
         return 1f - easeOutCubic(progress);
     }
 
-    public void render(DrawContext context, float mouseX, float mouseY, float delta, int guiScale, float alphaMultiplier) {
+    public void render(DrawContext context, float mouseX, float mouseY, float delta, float guiScale, float alphaMultiplier) {
         this.panelAlpha = alphaMultiplier;
         this.currentScale = 1f;
 
@@ -226,7 +226,7 @@ public class AutoBuyGuiComponent implements IMinecraft {
         float clipW = width - 6;
         float clipH = height - 3;
 
-        Scissor.enable(clipX, clipY, clipW, clipH, FORCED_GUI_SCALE);
+        Scissor.enable(clipX, clipY, clipW, clipH, FORCED_GUI_SCALE * 1.8f);
 
         float contentOffsetX = slideOffsetX;
         float contentAlpha = alphaMultiplier * slideAlpha;
@@ -261,10 +261,10 @@ public class AutoBuyGuiComponent implements IMinecraft {
 
         float scaleFactor = getScaleFactor();
 
-        int scissorX1 = (int) (clipX * scaleFactor);
-        int scissorY1 = (int) (clipY * scaleFactor);
-        int scissorX2 = (int) ((clipX + clipW) * scaleFactor);
-        int scissorY2 = (int) ((clipY + clipH) * scaleFactor);
+        int scissorX1 = (int) (clipX * scaleFactor * 1.8f);
+        int scissorY1 = (int) (clipY * scaleFactor * 1.8f);
+        int scissorX2 = (int) ((clipX + clipW) * scaleFactor * 1.8f);
+        int scissorY2 = (int) ((clipY + clipH) * scaleFactor * 1.8f);
 
         context.enableScissor(scissorX1, scissorY1, scissorX2, scissorY2);
 

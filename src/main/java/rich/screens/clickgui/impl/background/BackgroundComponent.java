@@ -109,7 +109,7 @@ public class BackgroundComponent implements IMinecraft {
         categoryRenderer.render(bgX, bgY, selectedCategory, alphaMultiplier);
     }
 
-    public void renderSearchResults(DrawContext context, float bgX, float bgY, float mouseX, float mouseY, int guiScale, float alphaMultiplier) {
+    public void renderSearchResults(DrawContext context, float bgX, float bgY, float mouseX, float mouseY, float guiScale, float alphaMultiplier) {
         searchRenderer.render(context, bgX, bgY, BG_WIDTH, BG_HEIGHT, mouseX, mouseY, guiScale, alphaMultiplier);
     }
 

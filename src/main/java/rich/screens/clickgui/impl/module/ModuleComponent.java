@@ -39,7 +39,7 @@ public class ModuleComponent implements IMinecraft {
     private final SettingsPanelRenderer settingsRenderer;
     private final ModuleDisplayHelper displayHelper;
 
-    private int savedGuiScale = 1;
+    private float savedGuiScale = 1;
     private float lastMouseX = 0, lastMouseY = 0;
     private float lastListX = 0, lastListY = 0, lastListWidth = 0, lastListHeight = 0;
 
@@ -125,7 +125,7 @@ public class ModuleComponent implements IMinecraft {
     }
 
     public void renderModuleList(DrawContext context, float x, float y, float width, float height,
-                                 float mouseX, float mouseY, int guiScale, float alphaMultiplier) {
+                                 float mouseX, float mouseY, float guiScale, float alphaMultiplier) {
         lastMouseX = mouseX;
         lastMouseY = mouseY;
         lastListX = x;
@@ -140,7 +140,7 @@ public class ModuleComponent implements IMinecraft {
     }
 
     public void renderSettingsPanel(DrawContext context, float x, float y, float width, float height,
-                                    float mouseX, float mouseY, float delta, int guiScale, float alphaMultiplier) {
+                                    float mouseX, float mouseY, float delta, float guiScale, float alphaMultiplier) {
         savedGuiScale = guiScale;
         settingsRenderer.render(context, selectedModule, settingComponents, x, y, width, height,
                 mouseX, mouseY, delta, guiScale, alphaMultiplier, scrollHandler, animationHandler);

@@ -20,7 +20,7 @@ public class AutoBuyRenderer implements IMinecraft {
     private static final float FADE_SPEED = 14f;
 
     public void render(DrawContext context, float bgX, float bgY, float mouseX, float mouseY,
-                       float delta, int guiScale, float alphaMultiplier, ModuleCategory currentCategory) {
+                       float delta, float guiScale, float alphaMultiplier, ModuleCategory currentCategory) {
 
         long currentTime = System.currentTimeMillis();
         float deltaTime = Math.min((currentTime - lastUpdateTime) / 1000f, 0.1f);

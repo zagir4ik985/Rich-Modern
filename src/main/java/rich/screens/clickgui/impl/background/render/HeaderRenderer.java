@@ -62,7 +62,7 @@ public class HeaderRenderer {
 
     private void renderSearchText(float searchBoxX, float searchBoxY, float searchBoxW, float searchBoxH,
                                   float textAreaX, SearchHandler searchHandler, float alphaMultiplier) {
-        Scissor.enable(searchBoxX + 3, searchBoxY, searchBoxW - 20, searchBoxH, 2);
+        Scissor.enable(searchBoxX + 3, searchBoxY, searchBoxW - 20, searchBoxH, 3.6f);
 
         if (searchHandler.hasSearchSelection() && searchHandler.getSearchSelectionAnimation() > 0.01f) {
             renderSearchSelection(textAreaX, searchBoxY, searchBoxH, searchHandler, alphaMultiplier);
